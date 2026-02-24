@@ -1,0 +1,199 @@
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap");
+
+@font-face {
+    font-family: "Departure Mono";
+    src: local("Departure Mono"), local("DepartureMono");
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "CaskaydiaCove NF Mono";
+    src:
+        local("CaskaydiaCove NF Mono"),
+        local("CaskaydiaCoveNerdFontMono-Regular"), local("Cascadia Mono");
+    font-display: swap;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+    :root {
+        --background: 0 0% 7%;
+        --foreground: 270 60% 75%;
+
+        --card: 0 0% 10%;
+        --card-foreground: 270 60% 75%;
+
+        --popover: 0 0% 10%;
+        --popover-foreground: 270 60% 75%;
+
+        --primary: 270 60% 65%;
+        --primary-foreground: 0 0% 7%;
+
+        --secondary: 0 0% 14%;
+        --secondary-foreground: 270 40% 80%;
+
+        --muted: 0 0% 14%;
+        --muted-foreground: 270 20% 50%;
+
+        --accent: 270 80% 70%;
+        --accent-foreground: 0 0% 7%;
+
+        --destructive: 0 84.2% 60.2%;
+        --destructive-foreground: 210 40% 98%;
+
+        --border: 270 20% 20%;
+        --input: 270 20% 20%;
+        --ring: 270 60% 65%;
+
+        --radius: 0.25rem;
+
+        --sidebar-background: 0 0% 7%;
+        --sidebar-foreground: 270 60% 75%;
+        --sidebar-primary: 270 60% 65%;
+        --sidebar-primary-foreground: 0 0% 7%;
+        --sidebar-accent: 0 0% 14%;
+        --sidebar-accent-foreground: 270 60% 75%;
+        --sidebar-border: 270 20% 20%;
+        --sidebar-ring: 270 60% 65%;
+    }
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+
+    body {
+        @apply bg-background text-foreground font-mono;
+        font-family: "CaskaydiaCove NF Mono", "JetBrains Mono", monospace;
+        letter-spacing: 0.02em;
+        text-rendering: optimizeLegibility;
+    }
+
+    code,
+    pre,
+    kbd,
+    samp {
+        font-family:
+            "Departure Mono", "CaskaydiaCove NF Mono", "JetBrains Mono",
+            monospace;
+    }
+}
+
+@layer utilities {
+    .text-glow {
+        text-shadow:
+            0 0 8px hsl(270 70% 72% / 0.55),
+            0 0 18px hsl(270 70% 72% / 0.3);
+    }
+
+    .border-glow {
+        box-shadow: -2px 0 8px hsl(270 60% 65% / 0.3);
+    }
+
+    .crt-screen {
+        position: relative;
+        box-shadow:
+            inset 0 0 40px rgba(0, 0, 0, 0.55),
+            0 0 35px rgba(120, 75, 190, 0.15);
+    }
+
+    .scanlines {
+        position: relative;
+    }
+
+    .scanlines::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: repeating-linear-gradient(
+            to bottom,
+            rgba(255, 255, 255, 0.045) 0px,
+            rgba(255, 255, 255, 0.045) 1px,
+            transparent 2px,
+            transparent 4px
+        );
+        mix-blend-mode: soft-light;
+    }
+
+    .terminal-panel {
+        background: linear-gradient(
+            180deg,
+            rgba(19, 12, 28, 0.82),
+            rgba(7, 5, 12, 0.9)
+        );
+        border: 1px solid rgba(168, 85, 247, 0.35);
+        box-shadow:
+            0 0 0 1px rgba(111, 55, 171, 0.25),
+            inset 0 0 20px rgba(0, 0, 0, 0.35);
+        backdrop-filter: blur(2px);
+    }
+
+    .terminal-title {
+        font-size: 0.72rem;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: hsl(279 75% 84%);
+        font-family: "Departure Mono", "CaskaydiaCove NF Mono", monospace;
+    }
+
+    .mono-ui {
+        font-family: "CaskaydiaCove NF Mono", "JetBrains Mono", monospace;
+    }
+
+    .mono-command {
+        font-family: "Departure Mono", "CaskaydiaCove NF Mono", monospace;
+        letter-spacing: 0.04em;
+    }
+
+    .volume-slider {
+        -webkit-appearance: none;
+        appearance: none;
+        background: transparent;
+    }
+
+    .volume-slider::-webkit-slider-runnable-track {
+        height: 4px;
+        background: rgba(192, 132, 252, 0.35);
+        border: 1px solid rgba(192, 132, 252, 0.5);
+    }
+
+    .volume-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 12px;
+        height: 12px;
+        margin-top: -5px;
+        border-radius: 0;
+        background: rgb(216, 180, 254);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 2px 0 rgba(124, 58, 237, 0.6);
+    }
+
+    .volume-slider::-moz-range-track {
+        height: 4px;
+        background: rgba(192, 132, 252, 0.35);
+        border: 1px solid rgba(192, 132, 252, 0.5);
+    }
+
+    .volume-slider::-moz-range-thumb {
+        width: 12px;
+        height: 12px;
+        border-radius: 0;
+        background: rgb(216, 180, 254);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 2px 0 rgba(124, 58, 237, 0.6);
+    }
+
+    .link-hover {
+        @apply underline underline-offset-4 decoration-primary/45 hover:decoration-primary transition-colors;
+    }
+}
