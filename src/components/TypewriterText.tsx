@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useReducedMotion } from "framer-motion";
 
 interface TypewriterTextProps {
   text: string;
@@ -13,23 +14,28 @@ const TypewriterText = ({
   delay = 0,
   persistentCursor = false,
 }: TypewriterTextProps) => {
+  const prefersReducedMotion = useReducedMotion();
   const [displayed, setDisplayed] = useState("");
   const [started, setStarted] = useState(false);
 
   useEffect(() => {
+    if (prefersReducedMotion) {
+      setDisplayed(text);
+      return;
+    }
     const timeout = setTimeout(() => setStarted(true), delay);
     return () => clearTimeout(timeout);
-  }, [delay]);
+  }, [delay, prefersReducedMotion, text]);
 
   useEffect(() => {
-    if (!started) return;
+    if (prefersReducedMotion || !started) return;
     if (displayed.length < text.length) {
       const timeout = setTimeout(() => {
         setDisplayed(text.slice(0, displayed.length + 1));
       }, speed);
       return () => clearTimeout(timeout);
     }
-  }, [displayed, text, speed, started]);
+  }, [displayed, text, speed, started, prefersReducedMotion]);
 
   return (
     <span className="inline-flex items-baseline">
