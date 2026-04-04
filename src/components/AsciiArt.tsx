@@ -1,8 +1,10 @@
 import { motion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-const AVATAR_URL =
-  "https://media.licdn.com/dms/image/v2/D4D03AQGO53Q8vtTX9g/profile-displayphoto-shrink_200_200/B4DZPbHxGkGoAY-/0/1734548068193?e=1773273600&v=beta&t=ujncZGi1bM34SaWTQ2TNyPoxWqqqxY-PgneZRFqjNRQ";
+// Drop your photo in public/ and point this at it (e.g. "/avatar.jpg").
+// Falls back to the bundled placeholder if the file is missing.
+const AVATAR_URL = "/avatar.svg";
+const AVATAR_FALLBACK = "/avatar.svg";
 const TRACKS = [
   "/assets/memory-reboot.mp3",
   "/assets/vision-slowed.mp3",
@@ -305,6 +307,11 @@ const AsciiArt = () => {
                   alt="Partha Pratim Gogoi profile"
                   className={`h-full w-full object-cover ${pressed.ghost ? "opacity-85" : ""}`}
                   style={{ objectPosition: "50% 24%", filter: imgFilter }}
+                  onError={(e) => {
+                    const img = e.currentTarget;
+                    if (img.src.endsWith(AVATAR_FALLBACK)) return;
+                    img.src = AVATAR_FALLBACK;
+                  }}
                 />
                 {(pressed.noise || pressed.chaos) && (
                   <div className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(to_bottom,rgba(255,255,255,0.09)_0px,rgba(255,255,255,0.09)_1px,transparent_2px,transparent_4px)] mix-blend-soft-light" />
