@@ -8,8 +8,11 @@ const PROFILE = {
   aliases: "Oxide 1-6 // Arsenic 1-6 // rugbedbugg",
   tagline: "Cyber Forensics Enthusiast & CTF Player",
   email: "mailto:yes.par781@gmail.com",
-  resumeUrl: "#", // TODO: add resume link
+  // Set to a real path once available, e.g. "/resume.pdf". Empty hides the button.
+  resumeUrl: "",
 };
+
+const hasResume = Boolean(PROFILE.resumeUrl && PROFILE.resumeUrl !== "#");
 
 const NAV_LINKS = [
   { label: "Projects", href: "#projects" },
@@ -196,14 +199,18 @@ const Index = () => {
               </span>
             ))}
           </div>
-          <p>
-            <a
-              href={PROFILE.resumeUrl}
-              className="text-sm text-accent link-hover"
-            >
-              Download Resume
-            </a>
-          </p>
+          {hasResume && (
+            <p>
+              <a
+                href={PROFILE.resumeUrl}
+                className="text-sm text-accent link-hover"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Download Resume
+              </a>
+            </p>
+          )}
         </motion.section>
 
         <motion.div {...fade(0.95)} className="text-center pt-4">
