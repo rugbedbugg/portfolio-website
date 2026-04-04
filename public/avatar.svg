@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 600" width="480" height="600" role="img" aria-label="Profile placeholder">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1a1026"/>
+      <stop offset="1" stop-color="#0a0710"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="38%" r="60%">
+      <stop offset="0" stop-color="#c084fc" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#c084fc" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="480" height="600" fill="url(#bg)"/>
+  <rect width="480" height="600" fill="url(#glow)"/>
+  <g fill="none" stroke="#a855f7" stroke-opacity="0.14" stroke-width="1">
+    <path d="M0 150 H480 M0 300 H480 M0 450 H480 M120 0 V600 M240 0 V600 M360 0 V600"/>
+  </g>
+  <text x="240" y="330" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="150" font-weight="700" fill="#e9d5ff" opacity="0.92">PG</text>
+  <text x="240" y="405" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="22" letter-spacing="8" fill="#d8b4fe" opacity="0.7">OXIDE 1-6</text>
+  <text x="240" y="452" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="13" letter-spacing="3" fill="#c084fc" opacity="0.45">[ NO SIGNAL ]</text>
+</svg>
