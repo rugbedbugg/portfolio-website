@@ -1,9 +1,9 @@
 import { motion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-// Drop your photo in public/ and point this at it (e.g. "/avatar.jpg").
+// Drop your photo in public/ and point this at it.
 // Falls back to the bundled placeholder if the file is missing.
-const AVATAR_URL = "/avatar.svg";
+const AVATAR_URL = "/avatar.jpg";
 const AVATAR_FALLBACK = "/avatar.svg";
 const TRACKS = [
   "/assets/memory-reboot.mp3",
@@ -305,8 +305,8 @@ const AsciiArt = () => {
                 <img
                   src={AVATAR_URL}
                   alt="Partha Pratim Gogoi profile"
-                  className={`h-full w-full object-cover ${pressed.ghost ? "opacity-85" : ""}`}
-                  style={{ objectPosition: "50% 24%", filter: imgFilter }}
+                  className={`h-full w-full object-contain md:object-cover ${pressed.ghost ? "opacity-85" : ""}`}
+                  style={{ objectPosition: "50% 50%", filter: imgFilter }}
                   onError={(e) => {
                     const img = e.currentTarget;
                     if (img.src.endsWith(AVATAR_FALLBACK)) return;
