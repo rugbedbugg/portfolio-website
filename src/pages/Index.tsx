@@ -68,10 +68,7 @@ const Index = () => {
   const taglineDelay = nameDelay + typedName.length * nameSpeed + 260;
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-black px-6 py-16">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(147,51,234,0.16),transparent_58%)]" />
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_72%,rgba(88,28,135,0.1),transparent_62%)]" />
-
+    <div className="relative min-h-screen overflow-hidden px-6 py-16">
       <div className="relative z-10 mx-auto w-full max-w-4xl space-y-8 p-1 sm:p-2 md:p-3 mono-ui">
         <div className="terminal-title">
           [ SYSTEM :: OXIDE TERMINAL PORTFOLIO :: 198X MODE ]
