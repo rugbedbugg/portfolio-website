@@ -1,19 +1,5 @@
 @import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap");
 
-@font-face {
-    font-family: "Departure Mono";
-    src: local("Departure Mono"), local("DepartureMono");
-    font-display: swap;
-}
-
-@font-face {
-    font-family: "CaskaydiaCove NF Mono";
-    src:
-        local("CaskaydiaCove NF Mono"),
-        local("CaskaydiaCoveNerdFontMono-Regular"), local("Cascadia Mono");
-    font-display: swap;
-}
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
