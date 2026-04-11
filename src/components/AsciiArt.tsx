@@ -1,10 +1,11 @@
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-// Drop your photo in public/ and point this at it.
-// Falls back to the bundled placeholder if the file is missing.
-const AVATAR_URL = "/avatar.jpg";
+// Portrait sources: real photo (RAW) by default, CGA-dithered via the DITHER toggle.
+const AVATAR_CGA = "/avatar-cga.png";
+const AVATAR_RAW = "/avatar.jpg";
 const AVATAR_FALLBACK = "/avatar.svg";
+
 const TRACKS = [
   "/assets/memory-reboot.mp3",
   "/assets/vision-slowed.mp3",
@@ -17,71 +18,125 @@ const TRACK_META = [
   "INSONAMIA — RONALD FIGO (SLOWED+RVB)",
 ];
 
-const chaos = [
-  "SIGNAL LOCKED",
-  "NOISE SYNCED",
-  "WARP ENGAGED",
-  "MEMORY FRAGMENT FOUND",
-  "AUDIO TAPE BREATHING",
-  "RETRO CORE ONLINE",
+// CH 03 is the live subject; the others are real "feeds" you can tune to.
+const CH_SUBJECT = 3;
+const CH_COUNT = 4;
+const CH_STATUS: Record<number, string> = {
+  1: "COLOR BARS",
+  2: "NO SIGNAL",
+  3: "CAM-01 LIVE",
+  4: "SUBJECT FILE",
+};
+const DATE_LABEL = "SAT 04 NOV 1985";
+// VHS/NTSC interlaced resolution tag for the live header
+const LIVE_TAG = "[LIVE] · 480i";
+// base id for the "current viewer" - rendered with live-varying Zalgo corruption
+const VIEWER_BASE = "YOU";
+const VOL_SEGMENTS = 12;
+const COLOR_BARS = [
+  "#FFFFFF",
+  "#FFFF55",
+  "#55FFFF",
+  "#55FF55",
+  "#FF55FF",
+  "#FF5555",
+  "#5555FF",
 ];
 
-type Pressed = {
-  launch: boolean;
-  warp: boolean;
-  noise: boolean;
-  neon: boolean;
-  slow: boolean;
-  turbo: boolean;
-  ghost: boolean;
-  chaos: boolean;
+const fmtClock = (d: Date) =>
+  [d.getHours(), d.getMinutes(), d.getSeconds()]
+    .map((n) => String(n).padStart(2, "0"))
+    .join(":");
+
+// combining marks used to "corrupt" text (Zalgo)
+const GLITCH_UP = [
+  "̀", "́", "̂", "̃", "̄", "̆", "̈",
+  "̊", "̋", "̑", "̓", "͗", "͛",
+];
+const GLITCH_DOWN = [
+  "̖", "̗", "̜", "̣", "̤", "̩", "̮",
+  "̱", "̳", "͓", "͔", "͙",
+];
+const GLITCH_MID = ["̴", "̵", "̶", "̷", "̸"];
+
+const pick = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
+
+// stack a random set of combining marks on each glyph; regenerated per frame
+const zalgo = (base: string, intensity = 4) => {
+  let out = "";
+  for (const ch of base) {
+    out += ch;
+    for (let i = 1 + Math.floor(Math.random() * intensity); i > 0; i--)
+      out += pick(GLITCH_UP);
+    for (let i = 1 + Math.floor(Math.random() * intensity); i > 0; i--)
+      out += pick(GLITCH_DOWN);
+    if (Math.random() < 0.7) out += pick(GLITCH_MID);
+  }
+  return out;
 };
 
-const commandMap = {
-  warpOn: "$ sudo sysctl display.warp=1",
-  warpOff: "$ sudo sysctl display.warp=0",
-  noiseOn: "$ fx static --enable --profile crt",
-  noiseOff: "$ fx static --disable",
-  neonOn: "$ palette set --mode neon-violet",
-  neonOff: "$ palette set --mode default",
-  ghostOn: "$ render --layer ghost --opacity 0.85",
-  ghostOff: "$ render --layer ghost --remove",
-  slowOn: "$ player rate 0.82",
-  slowOff: "$ player rate 1.00",
-  turboOn: "$ player rate 1.18",
-  turboOff: "$ player rate 1.00",
-  launchOn: "$ player play memory-reboot.mp3",
-  launchOff: "$ player pause",
-  chaos: "$ diagnostics --randomize --retro",
+// text that re-corrupts every ~110ms so it reads as actively glitching
+const GlitchText = ({
+  text,
+  className,
+}: {
+  text: string;
+  className?: string;
+}) => {
+  const reduced = useReducedMotion();
+  const [glitched, setGlitched] = useState(() => zalgo(text));
+  useEffect(() => {
+    if (reduced) {
+      setGlitched(zalgo(text, 2));
+      return;
+    }
+    const id = window.setInterval(() => setGlitched(zalgo(text)), 110);
+    return () => window.clearInterval(id);
+  }, [text, reduced]);
+  return (
+    <span className={className} aria-label={text}>
+      {glitched}
+    </span>
+  );
 };
 
 const AsciiArt = () => {
+  const prefersReducedMotion = useReducedMotion();
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const currentTrackRef = useRef(0);
-  const [pressed, setPressed] = useState<Pressed>({
-    launch: false,
-    warp: false,
-    noise: false,
-    neon: false,
-    slow: false,
-    turbo: false,
-    ghost: false,
-    chaos: false,
-  });
 
-  const [statusText, setStatusText] = useState("READY");
-  const [terminalLines, setTerminalLines] = useState<string[]>([
-    "oxide@deck:~$ boot cassette-ui",
-    "[ok] audio core linked",
-    "[ok] shader bus online",
-    "[ready] controls listening...",
+  // Web Audio graph (built lazily on first play) for the real spectrum meter
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const freqRef = useRef<Uint8Array | null>(null);
+  const graphReadyRef = useRef(false);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  const [playing, setPlaying] = useState(false);
+  const [slow, setSlow] = useState(false);
+  const [turbo, setTurbo] = useState(false);
+  const [invert, setInvert] = useState(false);
+  const [dither, setDither] = useState(false);
+
+  const [channel, setChannel] = useState(CH_SUBJECT);
+  const [volume, setVolume] = useState(0.3);
+  const [jamming, setJamming] = useState(false);
+
+  const [statusText, setStatusText] = useState("● REC · STANDBY");
+  const [trackMeta, setTrackMeta] = useState(TRACK_META[0]);
+  const [clock, setClock] = useState(() => fmtClock(new Date()));
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [log, setLog] = useState<string[]>([
+    "cam-01@oxide:~$ boot feed",
+    "[ok] sensor array online",
+    "[ok] cga adapter linked",
+    "[rec] logging feed...",
   ]);
 
-  const [selectedKey, setSelectedKey] = useState<keyof Pressed>("launch");
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  const [trackMeta, setTrackMeta] = useState(TRACK_META[0]);
-  const [volume, setVolume] = useState(0.3);
-  const [phase, setPhase] = useState(0);
+  const subjectLive = channel === CH_SUBJECT && !jamming;
+  const channelLabel = `CH ${String(channel).padStart(2, "0")}`;
+  const showStatic = jamming || channel === 2;
+  const filledSegments = Math.round(volume * VOL_SEGMENTS);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -89,29 +144,87 @@ const AsciiArt = () => {
   }, []);
 
   useEffect(() => {
-    let raf = 0;
-    const tick = () => {
-      setPhase((p) => (p + 0.06) % (Math.PI * 2));
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+    const id = setInterval(() => setClock(fmtClock(new Date())), 1000);
+    return () => clearInterval(id);
   }, []);
 
-  const pushTerminal = (line: string) => {
-    setTerminalLines((prev) => {
-      const next = [...prev, line];
-      return next.slice(-8);
-    });
-  };
+  // Spectrum meter: real audio bars when playing, idle shimmer otherwise.
+  useEffect(() => {
+    const cv = canvasRef.current;
+    const ctx2d = cv?.getContext("2d");
+    if (!cv || !ctx2d) return;
+    const W = cv.width;
+    const H = cv.height;
+    const BARS = 22;
+    const bw = W / BARS;
 
-  const setToggle = (key: keyof Pressed, cmdOn: string, cmdOff: string) => {
-    setSelectedKey(key);
-    setPressed((prev) => {
-      const next = !prev[key];
-      pushTerminal(next ? cmdOn : cmdOff);
-      return { ...prev, [key]: next };
-    });
+    const paint = (heights: number[]) => {
+      ctx2d.clearRect(0, 0, W, H);
+      ctx2d.fillStyle = "#55FFFF";
+      for (let i = 0; i < BARS; i++) {
+        const bh = Math.max(1, heights[i] * H);
+        ctx2d.fillRect(i * bw + 0.5, H - bh, bw - 1, bh);
+      }
+    };
+
+    if (prefersReducedMotion) {
+      paint(new Array(BARS).fill(0.06));
+      return;
+    }
+
+    let raf = 0;
+    let ph = 0;
+    const render = () => {
+      const analyser = analyserRef.current;
+      const freq = freqRef.current;
+      const heights: number[] = [];
+      if (playing && analyser && freq) {
+        analyser.getByteFrequencyData(freq);
+        for (let i = 0; i < BARS; i++) {
+          heights[i] = Math.min(1, (freq[i] / 255) * 1.15);
+        }
+      } else {
+        for (let i = 0; i < BARS; i++) {
+          heights[i] =
+            0.05 +
+            (Math.sin(ph + i * 0.55) * 0.5 + 0.5) * 0.08 +
+            Math.random() * 0.03;
+        }
+      }
+      paint(heights);
+      ph += 0.09;
+      raf = requestAnimationFrame(render);
+    };
+    raf = requestAnimationFrame(render);
+    return () => cancelAnimationFrame(raf);
+  }, [playing, prefersReducedMotion]);
+
+  const pushLog = (line: string) =>
+    setLog((prev) => [...prev, line].slice(-8));
+
+  const ensureAudioGraph = () => {
+    if (graphReadyRef.current) return;
+    const audio = audioRef.current;
+    if (!audio) return;
+    try {
+      const Ctx =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext })
+          .webkitAudioContext;
+      const ctx = new Ctx();
+      const source = ctx.createMediaElementSource(audio);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 64;
+      analyser.smoothingTimeConstant = 0.75;
+      source.connect(analyser);
+      analyser.connect(ctx.destination);
+      audioCtxRef.current = ctx;
+      analyserRef.current = analyser;
+      freqRef.current = new Uint8Array(analyser.frequencyBinCount);
+      graphReadyRef.current = true;
+    } catch {
+      // Web Audio unavailable: meter falls back to idle shimmer.
+    }
   };
 
   const playTrackByIndex = async (idx: number) => {
@@ -127,118 +240,142 @@ const AsciiArt = () => {
     }
   };
 
-  const handleLaunch = async () => {
+  const applyRate = () => {
     const audio = audioRef.current;
     if (!audio) return;
-    setSelectedKey("launch");
+    audio.playbackRate = slow ? 0.82 : turbo ? 1.18 : 1;
+  };
 
-    if (pressed.launch) {
+  const handlePlay = async () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    ensureAudioGraph();
+    audioCtxRef.current?.resume?.();
+    if (playing) {
       audio.pause();
-      setPressed((prev) => ({ ...prev, launch: false }));
-      pushTerminal(commandMap.launchOff);
-      setStatusText("AUDIO PAUSED");
+      setPlaying(false);
+      pushLog("$ deck pause");
+      setStatusText("● REC · PAUSED");
       return;
     }
-
-    try {
-      await playTrackByIndex(currentTrackRef.current);
-      setPressed((prev) => ({ ...prev, launch: true }));
-      pushTerminal(commandMap.launchOn);
-      setStatusText("PLAYBACK ACTIVE");
-    } catch {
-      setPressed((prev) => ({ ...prev, launch: false }));
-      pushTerminal("[err] audio device busy");
-      setStatusText("AUDIO ERROR");
-    }
+    await playTrackByIndex(currentTrackRef.current);
+    applyRate();
+    setPlaying(true);
+    pushLog("$ deck play");
+    setStatusText("● REC · PLAYBACK");
   };
 
   const handleSpeed = (mode: "slow" | "turbo") => {
     const audio = audioRef.current;
     if (!audio) return;
-    setSelectedKey(mode);
-
-    setPressed((prev) => {
-      const wasActive = prev[mode];
-      const next = { ...prev, slow: false, turbo: false };
-      if (!wasActive) next[mode] = true;
-      return next;
-    });
-
+    const nextSlow = mode === "slow" ? !slow : false;
+    const nextTurbo = mode === "turbo" ? !turbo : false;
+    setSlow(nextSlow);
+    setTurbo(nextTurbo);
+    audio.playbackRate = nextSlow ? 0.82 : nextTurbo ? 1.18 : 1;
     if (mode === "slow") {
-      const nextSlow = !pressed.slow;
-      audio.playbackRate = nextSlow ? 0.82 : 1;
-      pushTerminal(nextSlow ? commandMap.slowOn : commandMap.slowOff);
-      setStatusText(nextSlow ? "SLOW MODE" : "RATE NORMAL");
+      pushLog(nextSlow ? "$ deck rate 0.82" : "$ deck rate 1.00");
+      setStatusText(nextSlow ? "SLO-MO ENGAGED" : "RATE NORMAL");
     } else {
-      const nextTurbo = !pressed.turbo;
-      audio.playbackRate = nextTurbo ? 1.18 : 1;
-      pushTerminal(nextTurbo ? commandMap.turboOn : commandMap.turboOff);
-      setStatusText(nextTurbo ? "TURBO MODE" : "RATE NORMAL");
+      pushLog(nextTurbo ? "$ deck rate 1.18" : "$ deck rate 1.00");
+      setStatusText(nextTurbo ? "FAST FORWARD" : "RATE NORMAL");
     }
   };
 
-  const handleChaos = async () => {
-    setSelectedKey("chaos");
-    const nextChaos = !pressed.chaos;
-    setPressed((prev) => ({ ...prev, chaos: nextChaos }));
-    const msg = chaos[Math.floor(Math.random() * chaos.length)];
-    setStatusText(msg);
-    pushTerminal(commandMap.chaos);
-
+  const handleJam = async () => {
+    pushLog("$ uplink --drop // SIGNAL LOST");
+    setStatusText("◇ SIGNAL LOST ◇");
+    setJamming(true);
+    window.setTimeout(() => setJamming(false), 1500);
     const nextIdx = Math.floor(Math.random() * TRACKS.length);
     currentTrackRef.current = nextIdx;
     setTrackMeta(TRACK_META[nextIdx]);
-    pushTerminal(`[mix] switched to track #${nextIdx + 1}`);
-
-    if (pressed.launch) {
+    if (playing) {
       await playTrackByIndex(nextIdx);
-      const audio = audioRef.current;
-      if (audio) {
-        if (pressed.slow) audio.playbackRate = 0.82;
-        else if (pressed.turbo) audio.playbackRate = 1.18;
-        else audio.playbackRate = 1;
-      }
+      applyRate();
     }
   };
 
-  const imgFilter = useMemo(() => {
-    const base = [
-      "contrast(1.2)",
-      "saturate(1.05)",
-      "hue-rotate(285deg)",
-      "brightness(0.72)",
-      "sepia(0.3)",
-    ];
-
-    if (pressed.neon) base.push("saturate(1.35)", "brightness(0.82)");
-    if (pressed.ghost) base.push("grayscale(0.35)", "contrast(1.35)");
-    return base.join(" ");
-  }, [pressed.neon, pressed.ghost]);
-
-  const sideOptions: Array<{
-    key: keyof Pressed;
-    label: string;
-    active: boolean;
-  }> = [
-    { key: "warp", label: "WARP", active: pressed.warp },
-    { key: "noise", label: "NOISE", active: pressed.noise },
-    { key: "neon", label: "NEON", active: pressed.neon },
-    { key: "ghost", label: "GHOST", active: pressed.ghost },
-  ];
-
-  const handleSideOptionToggle = (key: keyof Pressed) => {
-    if (key === "warp") return setToggle("warp", commandMap.warpOn, commandMap.warpOff);
-    if (key === "noise") return setToggle("noise", commandMap.noiseOn, commandMap.noiseOff);
-    if (key === "neon") return setToggle("neon", commandMap.neonOn, commandMap.neonOff);
-    if (key === "ghost") return setToggle("ghost", commandMap.ghostOn, commandMap.ghostOff);
+  const stepChannel = (dir: 1 | -1) => {
+    setChannel((c) => {
+      const next = ((c - 1 + dir + CH_COUNT) % CH_COUNT) + 1;
+      pushLog(`$ tuner set --ch ${String(next).padStart(2, "0")}`);
+      setStatusText(CH_STATUS[next]);
+      return next;
+    });
   };
 
-  const handleVolumeChange = (next: number) => {
-    const clamped = Math.max(0, Math.min(1, next));
+  const toggleInvert = () => {
+    setInvert((v) => {
+      pushLog(v ? "$ video invert --off" : "$ video invert --on");
+      setStatusText(v ? "VIDEO NORMAL" : "VIDEO INVERTED");
+      return !v;
+    });
+  };
+
+  const toggleDither = () => {
+    setDither((d) => {
+      pushLog(d ? "$ decode raw" : "$ decode cga --dither");
+      setStatusText(d ? "RAW FEED" : "CGA DECODE");
+      return !d;
+    });
+  };
+
+  const setVol = (v: number) => {
+    const clamped = Math.max(0, Math.min(1, v));
     setVolume(clamped);
     const audio = audioRef.current;
     if (audio) audio.volume = clamped;
   };
+
+  const nudgeVol = (delta: number) =>
+    setVol(Math.round((volume + delta) * VOL_SEGMENTS) / VOL_SEGMENTS);
+
+  const rawFilter = useMemo(
+    () => "contrast(1.16) brightness(0.94) saturate(0.9) blur(0.5px)",
+    [],
+  );
+
+  const feedFilter =
+    [dither ? "" : rawFilter, invert ? "invert(1)" : ""]
+      .filter(Boolean)
+      .join(" ") || undefined;
+
+  const toggles: Array<{ label: string; active: boolean; onToggle: () => void }> =
+    [
+      { label: "INVERT", active: invert, onToggle: toggleInvert },
+      { label: "DITHER", active: dither, onToggle: toggleDither },
+    ];
+
+  const transport: Array<{
+    icon: string;
+    label: string;
+    active: boolean;
+    onClick: () => void;
+  }> = [
+    { icon: "<<", label: "SLO-MO", active: slow, onClick: () => handleSpeed("slow") },
+    { icon: ">>", label: "F.FWD", active: turbo, onClick: () => handleSpeed("turbo") },
+    { icon: "!!", label: "JAM", active: jamming, onClick: handleJam },
+    {
+      icon: playing ? "||" : ">",
+      label: playing ? "HOLD" : "PLAY",
+      active: playing,
+      onClick: handlePlay,
+    },
+  ];
+
+  const cornerClasses = [
+    "left-1 top-1 border-l border-t",
+    "right-1 top-1 border-r border-t",
+    "left-1 bottom-1 border-l border-b",
+    "right-1 bottom-1 border-r border-b",
+  ];
+
+  const noticeText = jamming
+    ? { big: "SIGNAL LOST", small: "-- UPLINK DROPPED --" }
+    : channel === 2
+      ? { big: "NO SIGNAL", small: `${channelLabel} · CHECK INPUT` }
+      : null;
 
   return (
     <motion.div
@@ -246,7 +383,7 @@ const AsciiArt = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.9 }}
       className="mx-auto w-full max-w-[900px]"
-      aria-label="Retro cassette profile logo"
+      aria-label="CGA surveillance feed module"
     >
       <audio
         ref={audioRef}
@@ -259,39 +396,36 @@ const AsciiArt = () => {
         onEnded={async () => {
           const nextIdx = Math.floor(Math.random() * TRACKS.length);
           currentTrackRef.current = nextIdx;
-          pushTerminal(`[ok] track ended → next #${nextIdx + 1}`);
-          if (pressed.launch) {
+          pushLog(`[rec] reel ended → next #${nextIdx + 1}`);
+          if (playing) {
             await playTrackByIndex(nextIdx);
-            const audio = audioRef.current;
-            if (audio) {
-              if (pressed.slow) audio.playbackRate = 0.82;
-              else if (pressed.turbo) audio.playbackRate = 1.18;
-              else audio.playbackRate = 1;
-            }
+            applyRate();
           }
         }}
       />
 
-      <div className="relative border border-fuchsia-300/30 bg-gradient-to-b from-[#120a1b] via-[#0d0915] to-[#07060d] p-5 sm:p-6">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(192,132,252,0.18),transparent_58%)]" />
-
-        <div className="relative z-20 mx-auto mb-4 h-9 w-[96%] border border-fuchsia-300/30 bg-fuchsia-100/10 px-3 overflow-hidden">
-          <div className="mono-command grid h-full grid-cols-[auto_1fr_auto] items-center text-[9px] sm:text-[10px] tracking-[0.12em] sm:tracking-[0.18em] text-fuchsia-100/85 gap-2">
-            <span className="text-left">SIDE D</span>
-            <span className="text-center truncate">{trackMeta}</span>
-            <span className="text-right">REC 78</span>
+      <div className="relative border-2 border-cga-bcyan/40 bg-cga-black p-4 sm:p-5">
+        {/* header: REC · tape · timestamp */}
+        <div className="relative z-20 mx-auto mb-3 h-8 w-[96%] border border-cga-bcyan/30 bg-cga-bcyan/[0.06] px-3 overflow-hidden">
+          <div className="mono-command grid h-full grid-cols-[auto_1fr_auto] items-center gap-2 text-[9px] sm:text-[10px] tracking-[0.12em] sm:tracking-[0.18em]">
+            <span className="flex items-center gap-1.5 text-left text-cga-bred">
+              <span className="inline-block h-2 w-2 bg-cga-bred animate-blink" />
+              {LIVE_TAG}
+            </span>
+            <span className="truncate text-center text-cga-gray">{trackMeta}</span>
+            <span className="text-right tabular-nums text-cga-bcyan">{clock}</span>
           </div>
         </div>
 
-        <div className="relative border border-fuchsia-300/35 bg-[#130d1c] px-4 py-4">
-          <div className="grid grid-cols-1 md:grid-cols-[minmax(220px,1.35fr)_minmax(280px,2fr)_minmax(180px,1.1fr)] items-stretch gap-3 sm:gap-4">
-            {/* left terminal: fixed size so it won't jump */}
-            <div className="border border-fuchsia-300/25 bg-black/45 p-2.5 h-[248px] flex flex-col min-w-0 md:min-w-[220px] overflow-hidden">
-              <div className="mono-command text-[9px] text-fuchsia-200/80 border-b border-fuchsia-300/20 pb-1 mb-2">
-                oxide@deck:~
+        <div className="relative border border-cga-bcyan/35 bg-cga-black px-4 py-4">
+          <div className="grid grid-cols-1 items-stretch gap-3 sm:gap-4 lg:grid-cols-[minmax(220px,1.35fr)_minmax(280px,2fr)_minmax(180px,1.1fr)]">
+            {/* left: system log */}
+            <div className="flex h-[212px] min-w-0 flex-col overflow-hidden border border-cga-bcyan/25 bg-cga-black p-2.5 lg:min-w-[220px]">
+              <div className="mono-command mb-2 border-b border-cga-bcyan/20 pb-1 text-[9px] text-cga-cyan">
+                cam-01@oxide:~
               </div>
-              <div className="space-y-1 mono-command text-[8px] sm:text-[9px] text-fuchsia-100/85 leading-relaxed h-[206px] overflow-hidden">
-                {terminalLines.map((line, idx) => (
+              <div className="mono-command h-[170px] space-y-1 overflow-hidden text-[8px] leading-relaxed text-cga-bgreen sm:text-[9px]">
+                {log.map((line, idx) => (
                   <div key={`${line}-${idx}`} className="truncate">
                     {line}
                   </div>
@@ -299,112 +433,276 @@ const AsciiArt = () => {
               </div>
             </div>
 
-            {/* center cassette window */}
-            <div className="relative border border-fuchsia-200/20 bg-black/55 p-2.5 overflow-hidden h-[248px]">
-              <div className={`relative overflow-hidden border border-fuchsia-200/15 h-full ${pressed.warp ? "animate-[pulse_2.2s_ease-in-out_infinite]" : ""}`}>
-                <img
-                  src={AVATAR_URL}
-                  alt="Partha Pratim Gogoi profile"
-                  className={`h-full w-full object-contain md:object-cover ${pressed.ghost ? "opacity-85" : ""}`}
-                  style={{ objectPosition: "50% 50%", filter: imgFilter }}
-                  onError={(e) => {
-                    const img = e.currentTarget;
-                    if (img.src.endsWith(AVATAR_FALLBACK)) return;
-                    img.src = AVATAR_FALLBACK;
-                  }}
-                />
-                {(pressed.noise || pressed.chaos) && (
-                  <div className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(to_bottom,rgba(255,255,255,0.09)_0px,rgba(255,255,255,0.09)_1px,transparent_2px,transparent_4px)] mix-blend-soft-light" />
+            {/* center: surveillance feed */}
+            <div className="relative h-[212px] overflow-hidden border border-cga-bcyan/20 bg-cga-black p-2.5">
+              <div
+                className="relative h-full overflow-hidden border border-cga-bcyan/15"
+                style={{
+                  animation:
+                    jamming && !prefersReducedMotion
+                      ? "glitch-tear 0.5s steps(3) infinite"
+                      : undefined,
+                }}
+              >
+                {/* CH 03 — live subject */}
+                {subjectLive && (
+                  <img
+                    src={dither ? AVATAR_CGA : AVATAR_RAW}
+                    alt="Partha Pratim Gogoi profile"
+                    className="h-full w-full object-contain md:object-cover"
+                    style={{
+                      objectPosition: "50% 50%",
+                      filter: feedFilter,
+                      imageRendering: dither ? "pixelated" : "auto",
+                    }}
+                    onError={(e) => {
+                      const img = e.currentTarget;
+                      if (img.src.endsWith(AVATAR_FALLBACK)) return;
+                      img.src = AVATAR_FALLBACK;
+                    }}
+                  />
                 )}
-                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle,transparent_42%,rgba(10,6,16,0.62)_100%)]" />
+
+                {/* CH 01 — SMPTE color bars */}
+                {!jamming && channel === 1 && (
+                  <div className="absolute inset-0 flex">
+                    {COLOR_BARS.map((c) => (
+                      <div key={c} className="h-full flex-1" style={{ background: c }} />
+                    ))}
+                  </div>
+                )}
+
+                {/* CH 04 — teletext subject file */}
+                {!jamming && channel === 4 && (
+                  <div className="mono-command absolute inset-0 flex flex-col justify-center gap-1 px-4 text-[9px] leading-relaxed text-cga-bcyan">
+                    <div className="text-cga-yellow">SUBJECT FILE :: CH 04</div>
+                    <div className="text-cga-bcyan/40">--------------------</div>
+                    <div>ID     : OXIDE 1-6</div>
+                    <div>CLASS  : CTF · FORENSICS</div>
+                    <div>FOCUS  : LOW-LEVEL / RE</div>
+                    <div>
+                      STATUS : <span className="text-cga-bgreen">TRACED</span>
+                    </div>
+                    <div>LOC    : [ REDACTED ]</div>
+                  </div>
+                )}
+
+                {/* broad CRT scanlines (always on) */}
+                <div className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(to_bottom,rgba(0,0,0,0.4)_0px,rgba(0,0,0,0.4)_2px,transparent_2px,transparent_4px)]" />
+                {/* ambient head-switch line */}
+                {!prefersReducedMotion && (
+                  <div
+                    className="pointer-events-none absolute left-0 h-[10px] w-full bg-cga-white/10 blur-[1px] mix-blend-overlay"
+                    style={{ animation: "tracking-roll 9s linear infinite" }}
+                  />
+                )}
+                {/* dead-channel / signal-loss static */}
+                {showStatic && (
+                  <div className="vhs-static pointer-events-none absolute inset-[-50%] h-[200%] w-[200%] opacity-80" />
+                )}
+                {/* JAM: one slow rolling band (no fast strobe) */}
+                {jamming && !prefersReducedMotion && (
+                  <div
+                    className="pointer-events-none absolute left-0 h-[22px] w-full bg-cga-white/25 blur-[1px] mix-blend-overlay"
+                    style={{ animation: "tracking-roll 0.9s linear infinite" }}
+                  />
+                )}
+                {/* no-signal / signal-lost notice */}
+                {noticeText && (
+                  <div className="mono-command absolute inset-0 flex flex-col items-center justify-center gap-1 text-center">
+                    <span className="text-[11px] tracking-[0.3em] text-cga-bcyan">
+                      {noticeText.big}
+                    </span>
+                    <span className="text-[8px] tracking-[0.2em] text-cga-gray">
+                      {noticeText.small}
+                    </span>
+                  </div>
+                )}
+                {/* vignette */}
+                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle,transparent_42%,rgba(0,0,0,0.6)_100%)]" />
+
+                {/* HUD: corner brackets */}
+                {cornerClasses.map((c) => (
+                  <div
+                    key={c}
+                    className={`pointer-events-none absolute h-3 w-3 border-cga-bcyan/70 ${c}`}
+                  />
+                ))}
+                {/* HUD: REC / channel / timestamp */}
+                <div className="mono-command pointer-events-none absolute left-2 top-2 flex items-center gap-1 text-[8px] text-cga-bred">
+                  <span className="inline-block h-1.5 w-1.5 bg-cga-bred animate-blink" />
+                  REC
+                </div>
+                <div className="mono-command pointer-events-none absolute right-2 top-2 text-[8px] tracking-[0.18em] text-cga-bcyan">
+                  {channelLabel}
+                </div>
+                <div className="mono-command pointer-events-none absolute bottom-2 left-2 text-[8px] tabular-nums text-cga-gray">
+                  {DATE_LABEL} {clock}
+                </div>
               </div>
             </div>
 
-            {/* right terminal-like options display (not buttons) */}
-            <div className="border border-fuchsia-300/25 bg-black/45 p-2.5 h-[248px] flex flex-col min-w-0 md:min-w-[180px] overflow-hidden">
-              <div className="mono-command text-[8px] text-fuchsia-200/80 border-b border-fuchsia-300/20 pb-1 mb-2">
-                controls.menu
+            {/* right: monitor controls */}
+            <div className="flex h-[212px] min-w-0 flex-col overflow-hidden border border-cga-bcyan/25 bg-cga-black p-2.5 lg:min-w-[180px]">
+              <div className="mono-command mb-2 border-b border-cga-bcyan/20 pb-1 text-[8px] text-cga-cyan">
+                monitor.ctl
               </div>
-              <div className="mono-command text-[8px] flex-1 min-h-0 flex flex-col justify-between" onMouseLeave={() => setHoveredIndex(null)}>
-                <div className="space-y-1 flex-none">
-                  {sideOptions.map((opt, idx) => {
-                    const isHovered = hoveredIndex === idx;
-                    const isSelected = hoveredIndex === null && selectedKey === opt.key;
+              <div
+                className="mono-command flex min-h-0 flex-1 flex-col justify-between text-[8px]"
+                onMouseLeave={() => setHoveredIndex(null)}
+              >
+                <div className="flex-none space-y-1">
+                  {/* channel stepper */}
+                  <div className="flex items-center justify-between border border-cga-bcyan/25 bg-cga-bcyan/[0.05] px-2 py-[3px] text-cga-bcyan">
+                    <button
+                      type="button"
+                      aria-label="Previous channel"
+                      onClick={() => stepChannel(-1)}
+                      className="px-1 text-cga-cyan hover:text-cga-bcyan"
+                    >
+                      {"<"}
+                    </button>
+                    <span className="tracking-[0.16em]">
+                      {channelLabel} {CH_STATUS[channel]}
+                    </span>
+                    <button
+                      type="button"
+                      aria-label="Next channel"
+                      onClick={() => stepChannel(1)}
+                      className="px-1 text-cga-cyan hover:text-cga-bcyan"
+                    >
+                      {">"}
+                    </button>
+                  </div>
+
+                  {/* effect toggles */}
+                  {toggles.map((opt, idx) => {
+                    const marked = hoveredIndex === idx;
                     return (
                       <div
-                        key={opt.key}
+                        key={opt.label}
                         role="button"
                         tabIndex={0}
                         onMouseEnter={() => setHoveredIndex(idx)}
-                        onClick={() => handleSideOptionToggle(opt.key)}
+                        onClick={opt.onToggle}
                         onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") handleSideOptionToggle(opt.key);
+                          if (e.key === "Enter" || e.key === " ") opt.onToggle();
                         }}
-                        className={`w-full text-left px-2 py-[3px] border border-fuchsia-300/20 transition-colors cursor-pointer select-none ${opt.active ? "bg-fuchsia-400/24 text-fuchsia-100" : "bg-fuchsia-900/10 text-fuchsia-200/85"}`}
+                        className={`w-full cursor-pointer select-none border border-cga-bcyan/25 px-2 py-[3px] text-left transition-colors ${
+                          opt.active
+                            ? "bg-cga-bcyan text-cga-black"
+                            : "bg-cga-bcyan/[0.05] text-cga-cyan"
+                        }`}
                       >
-                        <span className={`inline-block w-4 ${(isHovered || isSelected) ? "text-fuchsia-100" : "text-fuchsia-300/40"}`}>{(isHovered || isSelected) ? "▶" : "·"}</span>
+                        <span
+                          className={`inline-block w-4 ${
+                            opt.active
+                              ? "text-cga-black"
+                              : marked
+                                ? "text-cga-bcyan"
+                                : "text-cga-cyan/40"
+                          }`}
+                        >
+                          {marked || opt.active ? ">" : "·"}
+                        </span>
                         <span>{opt.label}</span>
-                        <span className={`float-right inline-block w-8 text-right ${opt.active ? "text-fuchsia-100" : "text-zinc-400"}`}>{opt.active ? "ON" : "OFF"}</span>
+                        <span className="float-right inline-block w-8 text-right">
+                          {opt.active ? "ON" : "OFF"}
+                        </span>
                       </div>
                     );
                   })}
                 </div>
 
-                <div className="mt-2 border border-fuchsia-300/20 bg-fuchsia-900/10 px-2 py-1.5 flex-none">
-                  <div className="flex items-center justify-between text-[8px] text-fuchsia-200/80 mb-1">
+                {/* volume: segmented bar */}
+                <div className="mt-2 flex-none border border-cga-bcyan/25 bg-cga-bcyan/[0.05] px-2 py-1.5">
+                  <div className="mb-1 flex items-center justify-between text-[8px] text-cga-cyan">
                     <span>VOL</span>
-                    <span>{Math.round(volume * 100)}%</span>
+                    <span className="text-cga-bcyan">{Math.round(volume * 100)}%</span>
                   </div>
-                  <input
-                    type="range"
-                    min={0}
-                    max={1}
-                    step={0.01}
-                    value={volume}
-                    onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
-                    className="w-full accent-fuchsia-300 volume-slider"
-                  />
+                  <div
+                    role="slider"
+                    tabIndex={0}
+                    aria-label="Volume"
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={Math.round(volume * 100)}
+                    onKeyDown={(e) => {
+                      if (e.key === "ArrowLeft" || e.key === "ArrowDown")
+                        nudgeVol(-1 / VOL_SEGMENTS);
+                      if (e.key === "ArrowRight" || e.key === "ArrowUp")
+                        nudgeVol(1 / VOL_SEGMENTS);
+                    }}
+                    className="flex gap-[2px]"
+                  >
+                    {Array.from({ length: VOL_SEGMENTS }, (_, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        aria-label={`Volume ${Math.round(((i + 1) / VOL_SEGMENTS) * 100)}%`}
+                        onClick={() => setVol((i + 1) / VOL_SEGMENTS)}
+                        className={`h-3 flex-1 border ${
+                          i < filledSegments
+                            ? "border-cga-bcyan bg-cga-bcyan"
+                            : "border-cga-bcyan/20 bg-cga-bcyan/[0.06]"
+                        }`}
+                      />
+                    ))}
+                  </div>
                 </div>
 
-                <div className="mt-2 border border-fuchsia-300/20 bg-fuchsia-900/10 px-2 py-1.5 flex-none h-[58px] overflow-hidden">
-                  <div className="text-[8px] text-fuchsia-200/80 mb-1">FREQ</div>
-                  <svg viewBox="0 0 100 24" className="w-full h-[34px]">
-                    <line x1="0" y1="12" x2="100" y2="12" stroke="rgba(216,180,254,0.25)" strokeWidth="0.5" />
-                    <path
-                      d={`M 0 12 ${Array.from({ length: 26 }, (_, i) => {
-                        const x = i * 4;
-                        const y = 12 + (Math.sin(phase + i * 0.45) * 3.1 + Math.sin(phase * 1.4 + i * 0.7) * 1.8 + Math.sin(phase * 0.7 + i * 0.23) * 1.2) * (0.65 + volume * 0.6);
-                        return `L ${x} ${y.toFixed(2)}`;
-                      }).join(" ")}`}
-                      fill="none"
-                      stroke="rgba(216,180,254,0.92)"
-                      strokeWidth="1.2"
-                    />
-                  </svg>
+                {/* signal spectrum meter */}
+                <div className="mt-2 flex-none overflow-hidden border border-cga-bcyan/25 bg-cga-bcyan/[0.05] px-2 py-1">
+                  <div className="mb-0.5 text-[8px] text-cga-cyan">SIGNAL</div>
+                  <canvas
+                    ref={canvasRef}
+                    width={160}
+                    height={26}
+                    className="h-[22px] w-full"
+                  />
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="mt-4 grid grid-cols-4 gap-2">
-            <button type="button" onClick={() => handleSpeed("slow")} className={`mono-command w-full border border-fuchsia-200/35 bg-fuchsia-100/[0.06] px-2 py-1.5 text-[9px] sm:text-[10px] text-fuchsia-100/90 transition-colors hover:bg-fuchsia-100/10 ${pressed.slow ? "bg-fuchsia-300/80 text-black border-fuchsia-100" : ""}`}>SLOW</button>
-            <button type="button" onClick={() => handleSpeed("turbo")} className={`mono-command w-full border border-fuchsia-200/35 bg-fuchsia-100/[0.06] px-2 py-1.5 text-[9px] sm:text-[10px] text-fuchsia-100/90 transition-colors hover:bg-fuchsia-100/10 ${pressed.turbo ? "bg-fuchsia-300/80 text-black border-fuchsia-100" : ""}`}>TURBO</button>
-            <button type="button" onClick={handleChaos} className={`mono-command w-full border border-fuchsia-200/35 bg-fuchsia-100/[0.06] px-2 py-1.5 text-[9px] sm:text-[10px] text-fuchsia-100/90 transition-colors hover:bg-fuchsia-100/10 ${pressed.chaos ? "bg-fuchsia-300/80 text-black border-fuchsia-100" : ""}`}>CHAOS</button>
-            <button type="button" onClick={handleLaunch} className={`mono-command w-full border border-fuchsia-200/35 bg-fuchsia-100/[0.06] px-2 py-1.5 text-[9px] sm:text-[10px] text-fuchsia-100/90 transition-colors hover:bg-fuchsia-100/10 ${pressed.launch ? "bg-fuchsia-300/80 text-black border-fuchsia-100" : ""}`}>LAUNCH</button>
+          {/* beefy transport */}
+          <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {transport.map((btn) => (
+              <button
+                key={btn.label}
+                type="button"
+                onClick={btn.onClick}
+                className={`mono-command flex w-full flex-col items-center justify-center gap-1 border-2 px-2 py-3 tracking-[0.12em] transition-colors ${
+                  btn.active
+                    ? "border-cga-white bg-cga-bcyan text-cga-black"
+                    : "border-cga-bcyan/40 bg-cga-bcyan/[0.05] text-cga-bcyan hover:bg-cga-bcyan/15"
+                }`}
+              >
+                <span className="text-[13px] leading-none">{btn.icon}</span>
+                <span className="text-[10px] leading-none sm:text-[11px]">{btn.label}</span>
+              </button>
+            ))}
           </div>
 
-          <div className="mt-3 mono-command text-[10px] text-fuchsia-200/85 tracking-[0.16em] text-center h-4">
+          <div className="mono-command mt-3 h-4 text-center text-[10px] tracking-[0.16em] text-cga-bcyan">
             {statusText}
           </div>
 
-          <div className="mt-4 h-1.5 border border-fuchsia-300/20 bg-fuchsia-300/15" />
+          <div className="mt-4 h-1.5 border border-cga-bcyan/25 bg-cga-bcyan/15" />
         </div>
 
-        <div className="mono-command relative z-20 mt-4 grid grid-cols-3 items-center text-[10px] tracking-[0.18em] text-fuchsia-100/75">
-          <span className="text-left">ANALOG DREAMS</span>
-          <span className="text-center">OXIDE 1-6</span>
-          <span className="text-right">PLAY ▶</span>
+        {/* footer */}
+        <div className="mono-command relative z-20 mt-4 flex flex-col items-center gap-1.5 text-[10px] tracking-[0.18em] text-cga-cyan sm:grid sm:grid-cols-3 sm:items-center sm:gap-2">
+          <span className="text-center sm:text-left">SECURITY TAPE</span>
+          <span className="text-center text-cga-gray">OXIDE 1-6</span>
+          <span className="flex items-center justify-center gap-1.5 tracking-[0.06em] sm:justify-end">
+            <span className="text-cga-gray">CURRENT VIEWER -</span>
+            <GlitchText text={VIEWER_BASE} className="text-cga-bred" />
+          </span>
         </div>
+
+        {/* subtle CRT corner curvature */}
+        <div className="pointer-events-none absolute inset-0 z-30 bg-[radial-gradient(130%_130%_at_50%_50%,transparent_62%,rgba(0,0,0,0.55)_100%)]" />
       </div>
     </motion.div>
   );
