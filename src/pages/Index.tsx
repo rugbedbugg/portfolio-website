@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import AsciiArt from "@/components/AsciiArt";
 import TypewriterText from "@/components/TypewriterText";
 import DossierPanel from "@/components/DossierPanel";
+import { ExtLink, hostOf } from "@/components/Transmission";
 
 const PROFILE = {
   name: "Partha P.G.",
@@ -146,13 +147,19 @@ const Index = () => {
           <DossierPanel label="CASE FILES" code="REF://PROJECTS.EXE">
             <div className="grid gap-3">
               {PROJECTS.map((project) => (
-                <a
+                <ExtLink
                   key={project.title}
                   href={project.href}
-                  target="_blank"
-                  rel="noreferrer"
+                  label={project.title}
                   className="group relative flex flex-col gap-2 border border-cga-bcyan/25 bg-cga-bcyan/[0.03] p-4 transition-colors hover:border-cga-bcyan/60 hover:bg-cga-bcyan/[0.06]"
                 >
+                  <div className="flex items-center justify-between gap-2 text-[10px] tracking-[0.14em] text-cga-cyan/70">
+                    <span>CLASS: {project.tags[0]?.toUpperCase()}</span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="inline-block h-1.5 w-1.5 bg-cga-bgreen" />
+                      STATUS: TRACED
+                    </span>
+                  </div>
                   <div className="flex items-center justify-between gap-2">
                     <p className="mono-command font-semibold text-cga-bcyan">{`$ ./${project.title}`}</p>
                     <span className="mono-command text-[10px] tracking-[0.16em] text-cga-cyan opacity-0 transition-opacity group-hover:opacity-100">
@@ -170,51 +177,56 @@ const Index = () => {
                       </span>
                     ))}
                   </div>
-                </a>
+                </ExtLink>
               ))}
             </div>
             <p className="mt-4">
-              <a
+              <ExtLink
                 href="https://github.com/rugbedbugg?tab=repositories"
-                target="_blank"
-                rel="noreferrer"
+                label="GitHub"
                 className="text-sm text-accent link-hover"
               >
                 View all projects on GitHub
-              </a>
+              </ExtLink>
             </p>
           </DossierPanel>
         </motion.section>
 
         <motion.section {...fade(0.8)} id="contact">
           <DossierPanel label="ESTABLISH UPLINK" code="REF://CONTACT.SYS">
-            <div className="flex flex-wrap items-center gap-x-1 text-sm">
-              {SOCIALS.map((s, i) => (
-                <span key={s.label}>
-                  <a
+            <ul className="space-y-1.5">
+              {SOCIALS.map((s) => (
+                <li key={s.label}>
+                  <ExtLink
                     href={s.href}
-                    className="link-hover text-foreground"
-                    target="_blank"
-                    rel="noreferrer"
+                    label={s.label}
+                    className="group flex items-center justify-between gap-3 border border-cga-bcyan/20 bg-cga-bcyan/[0.03] px-3 py-2 transition-colors hover:border-cga-bcyan/50 hover:bg-cga-bcyan/[0.06]"
                   >
-                    {s.label}
-                  </a>
-                  {i < SOCIALS.length - 1 && (
-                    <span className="text-muted-foreground mx-2">//</span>
-                  )}
-                </span>
+                    <span className="flex min-w-0 items-center gap-2">
+                      <span className="inline-block h-1.5 w-1.5 shrink-0 bg-cga-bgreen" />
+                      <span className="mono-command text-cga-bcyan">
+                        {s.label.toUpperCase()}
+                      </span>
+                      <span className="truncate text-xs text-cga-gray">
+                        :: {hostOf(s.href)}
+                      </span>
+                    </span>
+                    <span className="mono-command shrink-0 text-[10px] tracking-[0.16em] text-cga-cyan opacity-60 transition-opacity group-hover:opacity-100">
+                      CONNECT ▸
+                    </span>
+                  </ExtLink>
+                </li>
               ))}
-            </div>
+            </ul>
             {hasResume && (
               <p className="mt-3">
-                <a
+                <ExtLink
                   href={PROFILE.resumeUrl}
+                  label="Resume"
                   className="text-sm text-accent link-hover"
-                  target="_blank"
-                  rel="noreferrer"
                 >
                   Download Resume
-                </a>
+                </ExtLink>
               </p>
             )}
           </DossierPanel>

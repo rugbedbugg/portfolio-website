@@ -289,6 +289,15 @@ All colors MUST be HSL.
     }
 }
 
+@keyframes uplink-fill {
+    from {
+        width: 0;
+    }
+    to {
+        width: 100%;
+    }
+}
+
 @keyframes ambient-drift {
     0% {
         transform: translate3d(-1%, -1%, 0) scale(1.02);
