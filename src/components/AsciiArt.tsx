@@ -272,7 +272,7 @@ const AsciiArt = () => {
         }}
       />
 
-      <div className="relative border border-fuchsia-300/30 bg-gradient-to-b from-[#120a1b] via-[#0d0915] to-[#07060d] p-5 sm:p-6 shadow-[0_0_45px_rgba(124,58,237,0.2)]">
+      <div className="relative border border-fuchsia-300/30 bg-gradient-to-b from-[#120a1b] via-[#0d0915] to-[#07060d] p-5 sm:p-6">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(192,132,252,0.18),transparent_58%)]" />
 
         <div className="relative z-20 mx-auto mb-4 h-9 w-[96%] border border-fuchsia-300/30 bg-fuchsia-100/10 px-3 overflow-hidden">
@@ -317,7 +317,6 @@ const AsciiArt = () => {
                   <div className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(to_bottom,rgba(255,255,255,0.09)_0px,rgba(255,255,255,0.09)_1px,transparent_2px,transparent_4px)] mix-blend-soft-light" />
                 )}
                 <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle,transparent_42%,rgba(10,6,16,0.62)_100%)]" />
-                <div className={`pointer-events-none absolute inset-0 opacity-35 bg-[linear-gradient(120deg,transparent_0%,rgba(168,85,247,0.35)_22%,transparent_45%,rgba(168,85,247,0.2)_68%,transparent_100%)] ${pressed.neon ? "animate-[pulse_1.1s_ease-in-out_infinite]" : "animate-[pulse_3s_ease-in-out_infinite]"}`} />
               </div>
             </div>
 
@@ -388,17 +387,17 @@ const AsciiArt = () => {
           </div>
 
           <div className="mt-4 grid grid-cols-4 gap-2">
-            <button type="button" onClick={() => handleSpeed("slow")} className={`mono-command w-full border border-fuchsia-200/35 bg-gradient-to-b from-fuchsia-100/20 to-fuchsia-200/5 px-2 py-1.5 text-[9px] sm:text-[10px] text-fuchsia-100/90 shadow-[0_3px_0_rgba(168,85,247,0.5),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all ${pressed.slow ? "translate-y-[2px] shadow-none bg-fuchsia-300/25 border-fuchsia-100/60" : ""}`}>SLOW</button>
-            <button type="button" onClick={() => handleSpeed("turbo")} className={`mono-command w-full border border-fuchsia-200/35 bg-gradient-to-b from-fuchsia-100/20 to-fuchsia-200/5 px-2 py-1.5 text-[9px] sm:text-[10px] text-fuchsia-100/90 shadow-[0_3px_0_rgba(168,85,247,0.5),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all ${pressed.turbo ? "translate-y-[2px] shadow-none bg-fuchsia-300/25 border-fuchsia-100/60" : ""}`}>TURBO</button>
-            <button type="button" onClick={handleChaos} className={`mono-command w-full border border-fuchsia-200/35 bg-gradient-to-b from-fuchsia-100/20 to-fuchsia-200/5 px-2 py-1.5 text-[9px] sm:text-[10px] text-fuchsia-100/90 shadow-[0_3px_0_rgba(168,85,247,0.5),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all ${pressed.chaos ? "translate-y-[2px] shadow-none bg-fuchsia-300/25 border-fuchsia-100/60" : ""}`}>CHAOS</button>
-            <button type="button" onClick={handleLaunch} className={`mono-command w-full border border-fuchsia-200/35 bg-gradient-to-b from-fuchsia-100/20 to-fuchsia-200/5 px-2 py-1.5 text-[9px] sm:text-[10px] text-fuchsia-100/90 shadow-[0_3px_0_rgba(168,85,247,0.5),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all ${pressed.launch ? "translate-y-[2px] shadow-none bg-fuchsia-300/25 border-fuchsia-100/60" : ""}`}>LAUNCH</button>
+            <button type="button" onClick={() => handleSpeed("slow")} className={`mono-command w-full border border-fuchsia-200/35 bg-fuchsia-100/[0.06] px-2 py-1.5 text-[9px] sm:text-[10px] text-fuchsia-100/90 transition-colors hover:bg-fuchsia-100/10 ${pressed.slow ? "bg-fuchsia-300/80 text-black border-fuchsia-100" : ""}`}>SLOW</button>
+            <button type="button" onClick={() => handleSpeed("turbo")} className={`mono-command w-full border border-fuchsia-200/35 bg-fuchsia-100/[0.06] px-2 py-1.5 text-[9px] sm:text-[10px] text-fuchsia-100/90 transition-colors hover:bg-fuchsia-100/10 ${pressed.turbo ? "bg-fuchsia-300/80 text-black border-fuchsia-100" : ""}`}>TURBO</button>
+            <button type="button" onClick={handleChaos} className={`mono-command w-full border border-fuchsia-200/35 bg-fuchsia-100/[0.06] px-2 py-1.5 text-[9px] sm:text-[10px] text-fuchsia-100/90 transition-colors hover:bg-fuchsia-100/10 ${pressed.chaos ? "bg-fuchsia-300/80 text-black border-fuchsia-100" : ""}`}>CHAOS</button>
+            <button type="button" onClick={handleLaunch} className={`mono-command w-full border border-fuchsia-200/35 bg-fuchsia-100/[0.06] px-2 py-1.5 text-[9px] sm:text-[10px] text-fuchsia-100/90 transition-colors hover:bg-fuchsia-100/10 ${pressed.launch ? "bg-fuchsia-300/80 text-black border-fuchsia-100" : ""}`}>LAUNCH</button>
           </div>
 
           <div className="mt-3 mono-command text-[10px] text-fuchsia-200/85 tracking-[0.16em] text-center h-4">
             {statusText}
           </div>
 
-          <div className="mt-4 h-2 rounded-full bg-gradient-to-r from-fuchsia-300/10 via-fuchsia-200/30 to-fuchsia-300/10" />
+          <div className="mt-4 h-1.5 border border-fuchsia-300/20 bg-fuchsia-300/15" />
         </div>
 
         <div className="mono-command relative z-20 mt-4 grid grid-cols-3 items-center text-[10px] tracking-[0.18em] text-fuchsia-100/75">

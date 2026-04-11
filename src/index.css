@@ -38,7 +38,7 @@ All colors MUST be HSL.
         --input: 270 20% 20%;
         --ring: 270 60% 65%;
 
-        --radius: 0.25rem;
+        --radius: 0rem;
 
         --sidebar-background: 0 0% 7%;
         --sidebar-foreground: 270 60% 75%;
@@ -74,14 +74,16 @@ All colors MUST be HSL.
 }
 
 @layer utilities {
+    /* VHS chromatic aberration: red/cyan channel split with a faint bleed */
     .text-glow {
         text-shadow:
-            0 0 8px hsl(270 70% 72% / 0.55),
-            0 0 18px hsl(270 70% 72% / 0.3);
+            -1.5px 0 0 hsl(0 100% 60% / 0.5),
+            1.5px 0 0 hsl(185 100% 65% / 0.45),
+            0 0 6px hsl(270 60% 62% / 0.35);
     }
 
     .border-glow {
-        box-shadow: -2px 0 8px hsl(270 60% 65% / 0.3);
+        box-shadow: inset 0 0 0 1px hsl(270 25% 32% / 0.5);
     }
 
     .crt-screen {
@@ -160,8 +162,7 @@ All colors MUST be HSL.
         margin-top: -5px;
         border-radius: 0;
         background: rgb(216, 180, 254);
-        border: 1px solid rgba(255, 255, 255, 0.5);
-        box-shadow: 0 2px 0 rgba(124, 58, 237, 0.6);
+        border: 1px solid rgba(192, 132, 252, 0.6);
     }
 
     .volume-slider::-moz-range-track {
@@ -175,8 +176,7 @@ All colors MUST be HSL.
         height: 12px;
         border-radius: 0;
         background: rgb(216, 180, 254);
-        border: 1px solid rgba(255, 255, 255, 0.5);
-        box-shadow: 0 2px 0 rgba(124, 58, 237, 0.6);
+        border: 1px solid rgba(192, 132, 252, 0.6);
     }
 
     .link-hover {

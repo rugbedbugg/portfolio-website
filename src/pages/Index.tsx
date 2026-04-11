@@ -156,7 +156,7 @@ const Index = () => {
                   {project.tags.map((tag) => (
                     <span
                       key={`${project.title}-${tag}`}
-                      className="rounded border border-primary/40 bg-primary/10 px-2 py-0.5 text-[11px] text-primary"
+                      className="border border-primary/40 bg-primary/10 px-2 py-0.5 text-[11px] text-primary"
                     >
                       {tag}
                     </span>
