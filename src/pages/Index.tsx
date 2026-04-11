@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import AsciiArt from "@/components/AsciiArt";
 import TypewriterText from "@/components/TypewriterText";
-import SectionHeading from "@/components/SectionHeading";
+import DossierPanel from "@/components/DossierPanel";
 
 const PROFILE = {
   name: "Partha P.G.",
@@ -116,10 +116,13 @@ const Index = () => {
           ))}
         </motion.nav>
 
-        <motion.section {...fade(0.5)} id="about" className="space-y-3">
-          <SectionHeading delay={0.5}>[ ABOUT.DAT ]</SectionHeading>
-          <div className="mono-command border border-primary/25 border-glow px-5 py-5 bg-secondary/35 text-[1rem] leading-8 text-foreground">
-            <div className="space-y-4 max-w-2xl">
+        <motion.section {...fade(0.5)} id="about">
+          <DossierPanel
+            label="SUBJECT DOSSIER"
+            code="REF://ABOUT.DAT"
+            bodyClassName="px-5 py-5"
+          >
+            <div className="mono-command max-w-2xl space-y-4 text-[1rem] leading-8 text-foreground">
               <p>
                 I enjoy solving CTF challenges and studying cyber forensics with
                 a hands-on approach. I like to break systems down, understand
@@ -136,80 +139,85 @@ const Index = () => {
                 friction for real workflows.
               </p>
             </div>
-          </div>
+          </DossierPanel>
         </motion.section>
 
-        <motion.section {...fade(0.65)} id="projects" className="space-y-3">
-          <SectionHeading delay={0.65}>[ PROJECTS.EXE ]</SectionHeading>
-          <div className="grid gap-3">
-            {PROJECTS.map((project) => (
+        <motion.section {...fade(0.65)} id="projects">
+          <DossierPanel label="CASE FILES" code="REF://PROJECTS.EXE">
+            <div className="grid gap-3">
+              {PROJECTS.map((project) => (
+                <a
+                  key={project.title}
+                  href={project.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="group relative flex flex-col gap-2 border border-cga-bcyan/25 bg-cga-bcyan/[0.03] p-4 transition-colors hover:border-cga-bcyan/60 hover:bg-cga-bcyan/[0.06]"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="mono-command font-semibold text-cga-bcyan">{`$ ./${project.title}`}</p>
+                    <span className="mono-command text-[10px] tracking-[0.16em] text-cga-cyan opacity-0 transition-opacity group-hover:opacity-100">
+                      ▸ OPEN
+                    </span>
+                  </div>
+                  <p className="text-sm text-cga-gray">{project.description}</p>
+                  <div className="mt-1 flex flex-wrap gap-2">
+                    {project.tags.map((tag) => (
+                      <span
+                        key={`${project.title}-${tag}`}
+                        className="border border-cga-bcyan/40 bg-cga-bcyan/10 px-2 py-0.5 text-[11px] text-cga-bcyan"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </a>
+              ))}
+            </div>
+            <p className="mt-4">
               <a
-                key={project.title}
-                href={project.href}
+                href="https://github.com/rugbedbugg?tab=repositories"
                 target="_blank"
                 rel="noreferrer"
-                className="border border-fuchsia-300/25 bg-secondary/35 p-4 hover:border-fuchsia-300/55 transition-colors"
+                className="text-sm text-accent link-hover"
               >
-                <p className="mono-command font-semibold text-foreground">{`$ ./${project.title}`}</p>
-                <p className="text-sm text-muted-foreground">
-                  {project.description}
-                </p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {project.tags.map((tag) => (
-                    <span
-                      key={`${project.title}-${tag}`}
-                      className="border border-primary/40 bg-primary/10 px-2 py-0.5 text-[11px] text-primary"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
+                View all projects on GitHub
               </a>
-            ))}
-          </div>
-          <p>
-            <a
-              href="https://github.com/rugbedbugg?tab=repositories"
-              target="_blank"
-              rel="noreferrer"
-              className="text-sm text-accent link-hover"
-            >
-              View all projects on GitHub
-            </a>
-          </p>
+            </p>
+          </DossierPanel>
         </motion.section>
 
-        <motion.section {...fade(0.8)} id="contact" className="space-y-3">
-          <SectionHeading delay={0.8}>[ CONTACT.SYS ]</SectionHeading>
-          <div className="flex flex-wrap items-center gap-x-1 text-sm">
-            {SOCIALS.map((s, i) => (
-              <span key={s.label}>
+        <motion.section {...fade(0.8)} id="contact">
+          <DossierPanel label="ESTABLISH UPLINK" code="REF://CONTACT.SYS">
+            <div className="flex flex-wrap items-center gap-x-1 text-sm">
+              {SOCIALS.map((s, i) => (
+                <span key={s.label}>
+                  <a
+                    href={s.href}
+                    className="link-hover text-foreground"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {s.label}
+                  </a>
+                  {i < SOCIALS.length - 1 && (
+                    <span className="text-muted-foreground mx-2">//</span>
+                  )}
+                </span>
+              ))}
+            </div>
+            {hasResume && (
+              <p className="mt-3">
                 <a
-                  href={s.href}
-                  className="link-hover text-foreground"
+                  href={PROFILE.resumeUrl}
+                  className="text-sm text-accent link-hover"
                   target="_blank"
                   rel="noreferrer"
                 >
-                  {s.label}
+                  Download Resume
                 </a>
-                {i < SOCIALS.length - 1 && (
-                  <span className="text-muted-foreground mx-2">//</span>
-                )}
-              </span>
-            ))}
-          </div>
-          {hasResume && (
-            <p>
-              <a
-                href={PROFILE.resumeUrl}
-                className="text-sm text-accent link-hover"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Download Resume
-              </a>
-            </p>
-          )}
+              </p>
+            )}
+          </DossierPanel>
         </motion.section>
 
         <motion.div {...fade(0.95)} className="text-center pt-4">
