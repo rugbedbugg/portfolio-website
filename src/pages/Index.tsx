@@ -68,17 +68,18 @@ const Index = () => {
   const taglineDelay = nameDelay + typedName.length * nameSpeed + 260;
 
   return (
-    <div className="relative min-h-screen overflow-hidden px-6 py-16">
-      <div className="relative z-10 mx-auto w-full max-w-4xl space-y-8 p-1 sm:p-2 md:p-3 mono-ui">
+    <div className="relative min-h-screen overflow-hidden px-6 py-6 sm:py-8">
+      <div className="relative z-10 mx-auto w-full max-w-4xl space-y-6 p-1 sm:p-2 md:p-3 mono-ui">
         <div className="terminal-title">
           [ SYSTEM :: OXIDE TERMINAL PORTFOLIO :: 198X MODE ]
         </div>
 
-        <div className="flex justify-center py-1">
-          <AsciiArt />
-        </div>
+        <div className="flex flex-col-reverse gap-6 lg:flex-col">
+          <div className="flex justify-center py-1">
+            <AsciiArt />
+          </div>
 
-        <motion.header {...fade(0.2)} className="text-center space-y-2">
+          <motion.header {...fade(0.2)} className="text-center space-y-2">
           <h1 className="mono-command text-2xl sm:text-3xl font-bold text-foreground text-glow tracking-widest">
             <span className="opacity-90">{"> "}</span>
             <TypewriterText
@@ -96,11 +97,12 @@ const Index = () => {
               persistentCursor
             />
           </p>
-        </motion.header>
+          </motion.header>
+        </div>
 
         <motion.nav
           {...fade(0.35)}
-          className="mono-command text-center text-sm border-y border-fuchsia-300/20 py-2"
+          className="mono-command text-center text-sm border-y border-primary/25 py-2"
         >
           {NAV_LINKS.map((link, i) => (
             <span key={link.label}>
@@ -116,7 +118,7 @@ const Index = () => {
 
         <motion.section {...fade(0.5)} id="about" className="space-y-3">
           <SectionHeading delay={0.5}>[ ABOUT.DAT ]</SectionHeading>
-          <div className="mono-command border border-fuchsia-300/25 border-glow px-5 py-5 bg-secondary/35 text-[1rem] leading-8 text-fuchsia-100/92">
+          <div className="mono-command border border-primary/25 border-glow px-5 py-5 bg-secondary/35 text-[1rem] leading-8 text-foreground">
             <div className="space-y-4 max-w-2xl">
               <p>
                 I enjoy solving CTF challenges and studying cyber forensics with
@@ -128,7 +130,7 @@ const Index = () => {
                 security workflows, and small developer tools that are simple,
                 fast, and useful.
               </p>
-              <p className="text-[0.92rem] leading-7 text-fuchsia-200/80 pt-1">
+              <p className="text-[0.92rem] leading-7 text-muted-foreground pt-1">
                 Right now, I'm focused on practical security engineering,
                 reverse-oriented thinking, and building tools that reduce
                 friction for real workflows.

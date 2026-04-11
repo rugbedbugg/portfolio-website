@@ -1,5 +1,13 @@
 @import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap");
 
+@font-face {
+    font-family: "Departure Mono";
+    src: url("/fonts/DepartureMono-Regular.woff2") format("woff2");
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -10,33 +18,34 @@ All colors MUST be HSL.
 
 @layer base {
     :root {
-        --background: 0 0% 7%;
-        --foreground: 270 60% 75%;
+        /* IBM 5153 (CGA) palette, used semantically */
+        --background: 0 0% 3%;
+        --foreground: 0 0% 72%; /* CGA light-gray #AAAAAA */
 
-        --card: 0 0% 10%;
-        --card-foreground: 270 60% 75%;
+        --card: 0 0% 5%;
+        --card-foreground: 0 0% 72%;
 
-        --popover: 0 0% 10%;
-        --popover-foreground: 270 60% 75%;
+        --popover: 0 0% 5%;
+        --popover-foreground: 0 0% 72%;
 
-        --primary: 270 60% 65%;
-        --primary-foreground: 0 0% 7%;
+        --primary: 180 100% 60%; /* CGA bright cyan #55FFFF */
+        --primary-foreground: 0 0% 0%;
 
-        --secondary: 0 0% 14%;
-        --secondary-foreground: 270 40% 80%;
+        --secondary: 0 0% 9%;
+        --secondary-foreground: 0 0% 100%;
 
-        --muted: 0 0% 14%;
-        --muted-foreground: 270 25% 65%;
+        --muted: 0 0% 9%;
+        --muted-foreground: 190 18% 58%;
 
-        --accent: 270 80% 70%;
-        --accent-foreground: 0 0% 7%;
+        --accent: 180 100% 67%; /* cyan */
+        --accent-foreground: 0 0% 0%;
 
-        --destructive: 0 84.2% 60.2%;
-        --destructive-foreground: 210 40% 98%;
+        --destructive: 0 100% 67%; /* CGA bright red #FF5555 */
+        --destructive-foreground: 0 0% 100%;
 
-        --border: 270 20% 20%;
-        --input: 270 20% 20%;
-        --ring: 270 60% 65%;
+        --border: 180 45% 26%;
+        --input: 180 45% 26%;
+        --ring: 180 100% 60%;
 
         --radius: 0rem;
 
@@ -58,32 +67,56 @@ All colors MUST be HSL.
 
     body {
         @apply bg-background text-foreground font-mono;
-        font-family: "CaskaydiaCove NF Mono", "JetBrains Mono", monospace;
-        letter-spacing: 0.02em;
+        font-family: "Departure Mono", "JetBrains Mono", monospace;
+        font-style: normal;
+        font-synthesis: none;
+        letter-spacing: 0.04em;
         text-rendering: optimizeLegibility;
+        /* CRT phosphor haze on every glyph */
+        text-shadow: 0 0 1.5px hsl(180 100% 72% / 0.22);
+    }
+
+    /* never allow slanted/oblique text anywhere */
+    * {
+        font-style: normal !important;
+    }
+
+    /* broad CRT scanlines over the whole page (surveillance monitor) */
+    body::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: 60;
+        pointer-events: none;
+        background: repeating-linear-gradient(
+            to bottom,
+            rgba(0, 0, 0, 0.26) 0px,
+            rgba(0, 0, 0, 0.26) 2px,
+            transparent 2px,
+            transparent 4px
+        );
     }
 
     code,
     pre,
     kbd,
     samp {
-        font-family:
-            "Departure Mono", "CaskaydiaCove NF Mono", "JetBrains Mono",
-            monospace;
+        font-family: "Departure Mono", "JetBrains Mono", monospace;
     }
 }
 
 @layer utilities {
-    /* VHS chromatic aberration: red/cyan channel split with a faint bleed */
+    /* CGA phosphor bloom + faint red/cyan chromatic split */
     .text-glow {
         text-shadow:
-            -1.5px 0 0 hsl(0 100% 60% / 0.5),
-            1.5px 0 0 hsl(185 100% 65% / 0.45),
-            0 0 6px hsl(270 60% 62% / 0.35);
+            -1px 0 0 hsl(0 100% 67% / 0.35),
+            1px 0 0 hsl(180 100% 67% / 0.4),
+            0 0 6px hsl(180 100% 72% / 0.55),
+            0 0 14px hsl(180 100% 60% / 0.3);
     }
 
     .border-glow {
-        box-shadow: inset 0 0 0 1px hsl(270 25% 32% / 0.5);
+        box-shadow: inset 0 0 0 1px hsl(180 45% 30% / 0.5);
     }
 
     .crt-screen {
@@ -134,7 +167,7 @@ All colors MUST be HSL.
     }
 
     .mono-ui {
-        font-family: "CaskaydiaCove NF Mono", "JetBrains Mono", monospace;
+        font-family: "Departure Mono", "JetBrains Mono", monospace;
     }
 
     .mono-command {
@@ -187,12 +220,12 @@ All colors MUST be HSL.
         background:
             radial-gradient(
                 40% 40% at 28% 24%,
-                hsl(270 70% 45% / 0.16),
+                hsl(180 100% 38% / 0.12),
                 transparent 60%
             ),
             radial-gradient(
                 46% 46% at 72% 76%,
-                hsl(276 70% 30% / 0.14),
+                hsl(300 100% 32% / 0.1),
                 transparent 62%
             );
         animation: ambient-drift 26s ease-in-out infinite alternate;
@@ -213,6 +246,46 @@ All colors MUST be HSL.
     .ambient-grain {
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
         animation: grain-shift 0.6s steps(5) infinite;
+    }
+
+    /* surveillance static "snow" for dead channels / STATIC toggle */
+    .vhs-static {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23s)'/%3E%3C/svg%3E");
+        background-size: 180px 180px;
+        animation: grain-shift 0.4s steps(4) infinite;
+    }
+}
+
+@keyframes tracking-roll {
+    0% {
+        top: -10%;
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.55;
+    }
+    90% {
+        opacity: 0.55;
+    }
+    100% {
+        top: 110%;
+        opacity: 0;
+    }
+}
+
+@keyframes glitch-tear {
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+    25% {
+        transform: translateX(-4px);
+    }
+    50% {
+        transform: translateX(3px);
+    }
+    75% {
+        transform: translateX(-2px);
     }
 }
 
