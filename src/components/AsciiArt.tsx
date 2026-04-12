@@ -20,12 +20,13 @@ const TRACK_META = [
 
 // CH 03 is the live subject; the others are real "feeds" you can tune to.
 const CH_SUBJECT = 3;
-const CH_COUNT = 4;
+const CH_COUNT = 5;
 const CH_STATUS: Record<number, string> = {
   1: "COLOR BARS",
   2: "NO SIGNAL",
   3: "CAM-01 LIVE",
   4: "SUBJECT FILE",
+  5: "VIEWER FILE",
 };
 const DATE_LABEL = "SAT 04 NOV 1985";
 // Surveillance geo-tag for the camera HUD / subject dossier
@@ -45,6 +46,53 @@ const COLOR_BARS = [
   "#FF5555",
   "#5555FF",
 ];
+
+// Real, client-side readout of whoever is watching — powers the "CURRENT VIEWER" trace.
+type Viewer = {
+  node: string;
+  display: string;
+  view: string;
+  tz: string;
+  locale: string;
+  cores: string;
+};
+
+const detectViewer = (): Viewer => {
+  const ua = navigator.userAgent;
+  const os = /Windows/.test(ua)
+    ? "WINDOWS"
+    : /Mac OS X/.test(ua)
+      ? "MACOS"
+      : /Android/.test(ua)
+        ? "ANDROID"
+        : /(iPhone|iPad|iPod)/.test(ua)
+          ? "IOS"
+          : /Linux/.test(ua)
+            ? "LINUX"
+            : "UNKNOWN";
+  const browser = /Edg\//.test(ua)
+    ? "EDGE"
+    : /OPR\//.test(ua)
+      ? "OPERA"
+      : /Firefox\//.test(ua)
+        ? "FIREFOX"
+        : /Chrome\//.test(ua)
+          ? "CHROME"
+          : /Safari\//.test(ua)
+            ? "SAFARI"
+            : "UNKNOWN";
+  const dpr = window.devicePixelRatio || 1;
+  return {
+    node: `${browser} / ${os}`,
+    display: `${window.screen.width}×${window.screen.height}${dpr !== 1 ? ` @${dpr}x` : ""}`,
+    view: `${window.innerWidth}×${window.innerHeight}`,
+    tz: Intl.DateTimeFormat().resolvedOptions().timeZone || "??",
+    locale: navigator.language || "??",
+    cores: navigator.hardwareConcurrency
+      ? `${navigator.hardwareConcurrency} CORES`
+      : "N/A",
+  };
+};
 
 const fmtClock = (d: Date) =>
   [d.getHours(), d.getMinutes(), d.getSeconds()]
@@ -139,6 +187,8 @@ const AsciiArt = () => {
   const subjectLive = channel === CH_SUBJECT && !jamming;
   const channelLabel = `CH ${String(channel).padStart(2, "0")}`;
   const showStatic = jamming || channel === 2;
+  // CH 04/05 are teletext data pages, not camera views — hide camera-only OSD there.
+  const teletext = channel === 4 || channel === 5;
   const filledSegments = Math.round(volume * VOL_SEGMENTS);
 
   useEffect(() => {
@@ -149,6 +199,18 @@ const AsciiArt = () => {
   useEffect(() => {
     const id = setInterval(() => setClock(fmtClock(new Date())), 1000);
     return () => clearInterval(id);
+  }, []);
+
+  // Trace the actual visitor (client-side only) for the CH 05 viewer dossier.
+  const [viewer, setViewer] = useState<Viewer | null>(null);
+  useEffect(() => {
+    setViewer(detectViewer());
+    const onResize = () =>
+      setViewer((v) =>
+        v ? { ...v, view: `${window.innerWidth}×${window.innerHeight}` } : v,
+      );
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
   }, []);
 
   // Spectrum meter: real audio bars when playing, idle shimmer otherwise.
@@ -490,6 +552,25 @@ const AsciiArt = () => {
                   </div>
                 )}
 
+                {/* CH 05 — the visitor's own dossier ("we see you") */}
+                {!jamming && channel === 5 && (
+                  <div className="mono-command absolute inset-0 flex flex-col justify-center gap-1 px-4 text-[9px] leading-relaxed text-cga-bcyan">
+                    <div className="flex items-center justify-between text-cga-bred">
+                      <span>VIEWER FILE :: CH 05</span>
+                      <span className="flex items-center gap-1">
+                        <span className="inline-block h-1.5 w-1.5 bg-cga-bred animate-blink" />
+                        TRACE LOCKED
+                      </span>
+                    </div>
+                    <div className="text-cga-bcyan/40">--------------------</div>
+                    <div>NODE   : {viewer?.node ?? "RESOLVING..."}</div>
+                    <div>DISPLAY: {viewer?.display ?? "..."}</div>
+                    <div>VIEW   : {viewer?.view ?? "..."}</div>
+                    <div>TZ     : {viewer?.tz ?? "..."}</div>
+                    <div>LOCALE : {viewer?.locale ?? "..."}</div>
+                  </div>
+                )}
+
                 {/* broad CRT scanlines (always on) */}
                 <div className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(to_bottom,rgba(0,0,0,0.4)_0px,rgba(0,0,0,0.4)_2px,transparent_2px,transparent_4px)]" />
                 {/* ambient head-switch line */}
@@ -532,19 +613,23 @@ const AsciiArt = () => {
                   />
                 ))}
                 {/* HUD: REC / channel / timestamp (dark OSD chips keep text legible over any feed) */}
-                <div className="mono-command pointer-events-none absolute left-2 top-2 flex items-center gap-1 rounded-[1px] bg-cga-black/60 px-1.5 py-0.5 text-[8px] text-cga-bred">
-                  <span className="inline-block h-1.5 w-1.5 bg-cga-bred animate-blink" />
-                  REC
-                </div>
+                {!teletext && (
+                  <div className="mono-command pointer-events-none absolute left-2 top-2 flex items-center gap-1 rounded-[1px] bg-cga-black/60 px-1.5 py-0.5 text-[8px] text-cga-bred">
+                    <span className="inline-block h-1.5 w-1.5 bg-cga-bred animate-blink" />
+                    REC
+                  </div>
+                )}
                 <div className="mono-command pointer-events-none absolute right-2 top-2 rounded-[1px] bg-cga-black/60 px-1.5 py-0.5 text-[8px] tracking-[0.18em] text-cga-bcyan">
                   {channelLabel}
                 </div>
-                <div className="mono-command pointer-events-none absolute bottom-2 left-2 flex flex-col gap-0.5 rounded-[1px] bg-cga-black/60 px-1.5 py-0.5 text-[8px] tabular-nums leading-tight">
-                  <span className="text-cga-white/85">
-                    {DATE_LABEL} {clock}
-                  </span>
-                  <span className="text-cga-bcyan">◎ {GPS_DECIMAL}</span>
-                </div>
+                {!teletext && (
+                  <div className="mono-command pointer-events-none absolute bottom-2 left-2 flex flex-col gap-0.5 rounded-[1px] bg-cga-black/60 px-1.5 py-0.5 text-[8px] tabular-nums leading-tight">
+                    <span className="text-cga-white/85">
+                      {DATE_LABEL} {clock}
+                    </span>
+                    <span className="text-cga-bcyan">◎ {GPS_DECIMAL}</span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -701,10 +786,19 @@ const AsciiArt = () => {
         <div className="mono-command relative z-20 mt-4 flex flex-col items-center gap-1.5 text-[10px] tracking-[0.18em] text-cga-cyan sm:grid sm:grid-cols-3 sm:items-center sm:gap-2">
           <span className="text-center sm:text-left">SECURITY TAPE</span>
           <span className="text-center text-cga-gray">OXIDE 1-6</span>
-          <span className="flex items-center justify-center gap-1.5 tracking-[0.06em] sm:justify-end">
+          <button
+            type="button"
+            onClick={() => {
+              setChannel(5);
+              setStatusText(CH_STATUS[5]);
+              pushLog("$ tuner set --ch 05 // trace viewer");
+            }}
+            title="Tune to viewer file"
+            className="flex items-center justify-center gap-1.5 tracking-[0.06em] transition-colors hover:text-cga-bcyan sm:justify-end"
+          >
             <span className="text-cga-gray">CURRENT VIEWER -</span>
             <GlitchText text={VIEWER_BASE} className="text-cga-bred" />
-          </span>
+          </button>
         </div>
 
         {/* subtle CRT corner curvature */}
