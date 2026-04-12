@@ -28,6 +28,9 @@ const CH_STATUS: Record<number, string> = {
   4: "SUBJECT FILE",
 };
 const DATE_LABEL = "SAT 04 NOV 1985";
+// Surveillance geo-tag for the camera HUD / subject dossier
+const GPS_DECIMAL = "12.911210, 79.132685";
+const GPS_DMS = "12°54'40\"N 79°07'57\"E";
 // VHS/NTSC interlaced resolution tag for the live header
 const LIVE_TAG = "[LIVE] · 480i";
 // base id for the "current viewer" - rendered with live-varying Zalgo corruption
@@ -483,7 +486,7 @@ const AsciiArt = () => {
                     <div>
                       STATUS : <span className="text-cga-bgreen">TRACED</span>
                     </div>
-                    <div>LOC    : [ REDACTED ]</div>
+                    <div>LOC    : {GPS_DMS}</div>
                   </div>
                 )}
 
@@ -528,16 +531,19 @@ const AsciiArt = () => {
                     className={`pointer-events-none absolute h-3 w-3 border-cga-bcyan/70 ${c}`}
                   />
                 ))}
-                {/* HUD: REC / channel / timestamp */}
-                <div className="mono-command pointer-events-none absolute left-2 top-2 flex items-center gap-1 text-[8px] text-cga-bred">
+                {/* HUD: REC / channel / timestamp (dark OSD chips keep text legible over any feed) */}
+                <div className="mono-command pointer-events-none absolute left-2 top-2 flex items-center gap-1 rounded-[1px] bg-cga-black/60 px-1.5 py-0.5 text-[8px] text-cga-bred">
                   <span className="inline-block h-1.5 w-1.5 bg-cga-bred animate-blink" />
                   REC
                 </div>
-                <div className="mono-command pointer-events-none absolute right-2 top-2 text-[8px] tracking-[0.18em] text-cga-bcyan">
+                <div className="mono-command pointer-events-none absolute right-2 top-2 rounded-[1px] bg-cga-black/60 px-1.5 py-0.5 text-[8px] tracking-[0.18em] text-cga-bcyan">
                   {channelLabel}
                 </div>
-                <div className="mono-command pointer-events-none absolute bottom-2 left-2 text-[8px] tabular-nums text-cga-gray">
-                  {DATE_LABEL} {clock}
+                <div className="mono-command pointer-events-none absolute bottom-2 left-2 flex flex-col gap-0.5 rounded-[1px] bg-cga-black/60 px-1.5 py-0.5 text-[8px] tabular-nums leading-tight">
+                  <span className="text-cga-white/85">
+                    {DATE_LABEL} {clock}
+                  </span>
+                  <span className="text-cga-bcyan">◎ {GPS_DECIMAL}</span>
                 </div>
               </div>
             </div>
