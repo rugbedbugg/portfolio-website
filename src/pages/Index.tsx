@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import AsciiArt from "@/components/AsciiArt";
 import TypewriterText from "@/components/TypewriterText";
 import DossierPanel from "@/components/DossierPanel";
-import { ExtLink, hostOf } from "@/components/Transmission";
+import { ExtLink } from "@/components/Transmission";
+import { recordVisit, relTime } from "@/lib/trace";
 
 const PROFILE = {
   name: "Partha P.G.",
@@ -22,12 +24,17 @@ const NAV_LINKS = [
 ];
 
 const SOCIALS = [
-  { label: "GitHub", href: "https://github.com/rugbedbugg" },
+  {
+    label: "GitHub",
+    href: "https://github.com/rugbedbugg",
+    cta: "Inspect the source code",
+  },
   {
     label: "LinkedIn",
     href: "https://www.linkedin.com/in/partha-gogoi-736241308/",
+    cta: "Review the professional record",
   },
-  { label: "Email", href: PROFILE.email },
+  { label: "Email", href: PROFILE.email, cta: "Open a direct channel" },
 ];
 
 const PROJECTS = [
@@ -61,6 +68,7 @@ const fade = (delay: number) => ({
 });
 
 const Index = () => {
+  const [trace] = useState(() => recordVisit());
   const typedName = PROFILE.name.toUpperCase();
   const TYPE_SPEED_MS = 100; // ~100 WPM approximation for name
   const nameSpeed = TYPE_SPEED_MS;
@@ -69,38 +77,43 @@ const Index = () => {
   const taglineDelay = nameDelay + typedName.length * nameSpeed + 260;
 
   return (
-    <div className="relative min-h-screen overflow-hidden px-6 py-6 sm:py-8">
-      <div className="relative z-10 mx-auto w-full max-w-4xl space-y-6 p-1 sm:p-2 md:p-3 mono-ui">
-        <div className="terminal-title">
-          [ SYSTEM :: OXIDE TERMINAL PORTFOLIO :: 198X MODE ]
-        </div>
-
-        <div className="flex flex-col-reverse gap-6 lg:flex-col">
-          <div className="flex justify-center py-1">
-            <AsciiArt />
+    <div className="relative z-10 min-h-screen overflow-hidden mono-ui md:flex md:h-screen">
+      {/* LEFT — subject identity: fixed + centered on md+, scrolls with the page on mobile */}
+      <aside className="flex flex-col justify-center px-6 py-6 sm:py-8 md:h-screen md:w-[44%] md:shrink-0 md:justify-start md:overflow-hidden lg:w-[40%]">
+        <div className="mx-auto w-full max-w-[560px] space-y-5">
+          <div className="terminal-title text-center md:text-left">
+            [ SYSTEM :: OXIDE TERMINAL PORTFOLIO :: 198X MODE ]
           </div>
 
           <motion.header {...fade(0.2)} className="text-center space-y-2">
-          <h1 className="mono-command text-2xl sm:text-3xl font-bold text-foreground text-glow tracking-widest">
-            <span className="opacity-90">{"> "}</span>
-            <TypewriterText
-              text={typedName}
-              speed={nameSpeed}
-              delay={nameDelay}
-            />
-          </h1>
-          <p className="text-muted-foreground text-xs">[{PROFILE.aliases}]</p>
-          <p className="mono-command text-foreground text-sm uppercase tracking-wide">
-            <TypewriterText
-              text={PROFILE.tagline}
-              speed={taglineSpeed}
-              delay={taglineDelay}
-              persistentCursor
-            />
-          </p>
+            <h1 className="mono-command text-2xl sm:text-3xl font-bold text-foreground text-glow tracking-widest">
+              <span className="opacity-90">{"> "}</span>
+              <TypewriterText
+                text={typedName}
+                speed={nameSpeed}
+                delay={nameDelay}
+              />
+            </h1>
+            <p className="text-muted-foreground text-xs">[{PROFILE.aliases}]</p>
+            <p className="mono-command text-foreground text-sm uppercase tracking-wide">
+              <TypewriterText
+                text={PROFILE.tagline}
+                speed={taglineSpeed}
+                delay={taglineDelay}
+                persistentCursor
+              />
+            </p>
           </motion.header>
-        </div>
 
+          <div className="flex justify-center">
+            <AsciiArt />
+          </div>
+        </div>
+      </aside>
+
+      {/* RIGHT — dossier content: scrolls independently on md+ */}
+      <main className="px-6 py-6 sm:py-8 md:h-screen md:flex-1 md:overflow-y-auto">
+        <div className="mx-auto w-full max-w-2xl space-y-6">
         <motion.nav
           {...fade(0.35)}
           className="mono-command text-center text-sm border-y border-primary/25 py-2"
@@ -151,23 +164,31 @@ const Index = () => {
                   key={project.title}
                   href={project.href}
                   label={project.title}
-                  className="group relative flex flex-col gap-2 border border-cga-bcyan/25 bg-cga-bcyan/[0.03] p-4 transition-colors hover:border-cga-bcyan/60 hover:bg-cga-bcyan/[0.06]"
+                  className="group relative flex flex-col gap-2 overflow-hidden border border-cga-bcyan/25 bg-cga-bcyan/[0.03] p-4 transition-colors hover:border-cga-bcyan/60 hover:bg-cga-bcyan/[0.06]"
                 >
-                  <div className="flex items-center justify-between gap-2 text-[10px] tracking-[0.14em] text-cga-cyan/70">
+                  {/* VHS tracking sweep on hover — echoes the cassette feed */}
+                  <span className="pointer-events-none absolute inset-0 z-0 opacity-0 transition-opacity group-hover:opacity-100">
+                    <span
+                      className="absolute left-0 h-[10px] w-full bg-cga-bcyan/20 blur-[1px] mix-blend-overlay"
+                      style={{ animation: "tracking-roll 1.6s linear infinite" }}
+                    />
+                    <span className="absolute inset-0 bg-[repeating-linear-gradient(to_bottom,rgba(85,255,255,0.05)_0px,rgba(85,255,255,0.05)_1px,transparent_1px,transparent_3px)]" />
+                  </span>
+                  <div className="relative z-10 flex items-center justify-between gap-2 text-[10px] tracking-[0.14em] text-cga-cyan/70">
                     <span>CLASS: {project.tags[0]?.toUpperCase()}</span>
                     <span className="flex items-center gap-1.5">
                       <span className="inline-block h-1.5 w-1.5 bg-cga-bgreen" />
                       STATUS: TRACED
                     </span>
                   </div>
-                  <div className="flex items-center justify-between gap-2">
+                  <div className="relative z-10 flex items-center justify-between gap-2">
                     <p className="mono-command font-semibold text-cga-bcyan">{`$ ./${project.title}`}</p>
                     <span className="mono-command text-[10px] tracking-[0.16em] text-cga-cyan opacity-0 transition-opacity group-hover:opacity-100">
                       ▸ OPEN
                     </span>
                   </div>
-                  <p className="text-sm text-cga-gray">{project.description}</p>
-                  <div className="mt-1 flex flex-wrap gap-2">
+                  <p className="relative z-10 text-sm text-cga-gray">{project.description}</p>
+                  <div className="relative z-10 mt-1 flex flex-wrap gap-2">
                     {project.tags.map((tag) => (
                       <span
                         key={`${project.title}-${tag}`}
@@ -180,15 +201,6 @@ const Index = () => {
                 </ExtLink>
               ))}
             </div>
-            <p className="mt-4">
-              <ExtLink
-                href="https://github.com/rugbedbugg?tab=repositories"
-                label="GitHub"
-                className="text-sm text-accent link-hover"
-              >
-                View all projects on GitHub
-              </ExtLink>
-            </p>
           </DossierPanel>
         </motion.section>
 
@@ -208,7 +220,7 @@ const Index = () => {
                         {s.label.toUpperCase()}
                       </span>
                       <span className="truncate text-xs text-cga-gray">
-                        :: {hostOf(s.href)}
+                        {s.cta}
                       </span>
                     </span>
                     <span className="mono-command shrink-0 text-[10px] tracking-[0.16em] text-cga-cyan opacity-60 transition-opacity group-hover:opacity-100">
@@ -233,11 +245,14 @@ const Index = () => {
         </motion.section>
 
         <motion.div {...fade(0.95)} className="text-center pt-4">
-          <span className="text-muted-foreground text-xs">
-            [ Visitors: 001337 ]
+          <span className="mono-command text-muted-foreground text-xs">
+            {trace.isNew
+              ? "[ ● NEW SUBJECT · TRACE INITIATED ]"
+              : `[ ● VISIT #${trace.visits} · LAST TRACE ${relTime(trace.lastSeen)} ]`}
           </span>
         </motion.div>
-      </div>
+        </div>
+      </main>
     </div>
   );
 };
