@@ -1,5 +1,7 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { detectViewer, type Viewer } from "@/lib/viewer";
+import { recordVisit, relTime } from "@/lib/trace";
 
 // Portrait sources: real photo (RAW) by default, CGA-dithered via the DITHER toggle.
 const AVATAR_CGA = "/avatar-cga.png";
@@ -28,7 +30,14 @@ const CH_STATUS: Record<number, string> = {
   4: "SUBJECT FILE",
   5: "VIEWER FILE",
 };
-const DATE_LABEL = "SAT 04 NOV 1985";
+// Live "tape" date, e.g. THU 23 JUL 2026 — everything on the feed reads live.
+const WEEKDAYS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+const MONTHS = [
+  "JAN", "FEB", "MAR", "APR", "MAY", "JUN",
+  "JUL", "AUG", "SEP", "OCT", "NOV", "DEC",
+];
+const fmtDate = (d: Date) =>
+  `${WEEKDAYS[d.getDay()]} ${String(d.getDate()).padStart(2, "0")} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 // Surveillance geo-tag for the camera HUD / subject dossier
 const GPS_DECIMAL = "12.911210, 79.132685";
 const GPS_DMS = "12°54'40\"N 79°07'57\"E";
@@ -47,57 +56,32 @@ const COLOR_BARS = [
   "#5555FF",
 ];
 
-// Real, client-side readout of whoever is watching — powers the "CURRENT VIEWER" trace.
-type Viewer = {
-  node: string;
-  display: string;
-  view: string;
-  tz: string;
-  locale: string;
-  cores: string;
-};
-
-const detectViewer = (): Viewer => {
-  const ua = navigator.userAgent;
-  const os = /Windows/.test(ua)
-    ? "WINDOWS"
-    : /Mac OS X/.test(ua)
-      ? "MACOS"
-      : /Android/.test(ua)
-        ? "ANDROID"
-        : /(iPhone|iPad|iPod)/.test(ua)
-          ? "IOS"
-          : /Linux/.test(ua)
-            ? "LINUX"
-            : "UNKNOWN";
-  const browser = /Edg\//.test(ua)
-    ? "EDGE"
-    : /OPR\//.test(ua)
-      ? "OPERA"
-      : /Firefox\//.test(ua)
-        ? "FIREFOX"
-        : /Chrome\//.test(ua)
-          ? "CHROME"
-          : /Safari\//.test(ua)
-            ? "SAFARI"
-            : "UNKNOWN";
-  const dpr = window.devicePixelRatio || 1;
-  return {
-    node: `${browser} / ${os}`,
-    display: `${window.screen.width}×${window.screen.height}${dpr !== 1 ? ` @${dpr}x` : ""}`,
-    view: `${window.innerWidth}×${window.innerHeight}`,
-    tz: Intl.DateTimeFormat().resolvedOptions().timeZone || "??",
-    locale: navigator.language || "??",
-    cores: navigator.hardwareConcurrency
-      ? `${navigator.hardwareConcurrency} CORES`
-      : "N/A",
-  };
-};
-
 const fmtClock = (d: Date) =>
   [d.getHours(), d.getMinutes(), d.getSeconds()]
     .map((n) => String(n).padStart(2, "0"))
     .join(":");
+
+// Running SMPTE tape timecode (HH:MM:SS:FF @ 30fps). Isolated in its own
+// component so the ~30/s tick doesn't re-render the whole feed.
+const Timecode = ({ reduced }: { reduced: boolean }) => {
+  const smpte = () => {
+    const d = new Date();
+    const ff = Math.min(29, Math.floor((d.getMilliseconds() / 1000) * 30));
+    return [d.getHours(), d.getMinutes(), d.getSeconds(), ff]
+      .map((n) => String(n).padStart(2, "0"))
+      .join(":");
+  };
+  const [tc, setTc] = useState(() => smpte());
+  useEffect(() => {
+    if (reduced) {
+      setTc(smpte().slice(0, 8) + ":00");
+      return;
+    }
+    const id = window.setInterval(() => setTc(smpte()), 1000 / 30);
+    return () => window.clearInterval(id);
+  }, [reduced]);
+  return <span className="tabular-nums">{tc}</span>;
+};
 
 // combining marks used to "corrupt" text (Zalgo)
 const GLITCH_UP = [
@@ -211,6 +195,27 @@ const AsciiArt = () => {
       );
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  // Local visit trace ("we see you"): recorded once, shared with the footer.
+  const [trace] = useState(() => recordVisit());
+
+  // Idle patrol: after 20s of no interaction the feed goes to "resuming patrol".
+  const [idle, setIdle] = useState(false);
+  useEffect(() => {
+    let t = 0;
+    const reset = () => {
+      setIdle(false);
+      window.clearTimeout(t);
+      t = window.setTimeout(() => setIdle(true), 20000);
+    };
+    const events = ["mousemove", "mousedown", "keydown", "touchstart", "scroll", "wheel"];
+    events.forEach((e) => window.addEventListener(e, reset, { passive: true }));
+    reset();
+    return () => {
+      window.clearTimeout(t);
+      events.forEach((e) => window.removeEventListener(e, reset));
+    };
   }, []);
 
   // Spectrum meter: real audio bars when playing, idle shimmer otherwise.
@@ -483,9 +488,9 @@ const AsciiArt = () => {
         </div>
 
         <div className="relative border border-cga-bcyan/35 bg-cga-black px-4 py-4">
-          <div className="grid grid-cols-1 items-stretch gap-3 sm:gap-4 lg:grid-cols-[minmax(220px,1.35fr)_minmax(280px,2fr)_minmax(180px,1.1fr)]">
-            {/* left: system log */}
-            <div className="flex h-[212px] min-w-0 flex-col overflow-hidden border border-cga-bcyan/25 bg-cga-black p-2.5 lg:min-w-[220px]">
+          <div className="grid grid-cols-1 items-stretch gap-3 sm:gap-4">
+            {/* system log — hidden in the fixed split panel (md+) to save height, shown on the mobile scroll */}
+            <div className="flex h-[212px] min-w-0 flex-col overflow-hidden border border-cga-bcyan/25 bg-cga-black p-2.5 md:hidden lg:min-w-[220px]">
               <div className="mono-command mb-2 border-b border-cga-bcyan/20 pb-1 text-[9px] text-cga-cyan">
                 cam-01@oxide:~
               </div>
@@ -514,7 +519,7 @@ const AsciiArt = () => {
                   <img
                     src={dither ? AVATAR_CGA : AVATAR_RAW}
                     alt="Partha Pratim Gogoi profile"
-                    className="h-full w-full object-contain md:object-cover"
+                    className="h-full w-full object-contain"
                     style={{
                       objectPosition: "50% 50%",
                       filter: feedFilter,
@@ -568,6 +573,12 @@ const AsciiArt = () => {
                     <div>VIEW   : {viewer?.view ?? "..."}</div>
                     <div>TZ     : {viewer?.tz ?? "..."}</div>
                     <div>LOCALE : {viewer?.locale ?? "..."}</div>
+                    <div>
+                      SEEN   :{" "}
+                      {trace.isNew
+                        ? "FIRST CONTACT"
+                        : `${trace.visits}× · LAST ${relTime(trace.lastSeen)}`}
+                    </div>
                   </div>
                 )}
 
@@ -605,6 +616,32 @@ const AsciiArt = () => {
                 {/* vignette */}
                 <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle,transparent_42%,rgba(0,0,0,0.6)_100%)]" />
 
+                {/* idle patrol: no interaction for a while → feed disengages */}
+                {idle && !noticeText && !jamming && (
+                  <div className="pointer-events-none absolute inset-0 z-10">
+                    <div className="absolute inset-0 flex opacity-25">
+                      {COLOR_BARS.map((c) => (
+                        <div key={c} className="h-full flex-1" style={{ background: c }} />
+                      ))}
+                    </div>
+                    <div className="absolute inset-0 bg-cga-black/55" />
+                    {!prefersReducedMotion && (
+                      <div
+                        className="absolute left-0 h-[14px] w-full bg-cga-bcyan/20 blur-[1px] mix-blend-overlay"
+                        style={{ animation: "tracking-roll 2.4s linear infinite" }}
+                      />
+                    )}
+                    <div className="mono-command absolute inset-0 flex flex-col items-center justify-center gap-1 text-center">
+                      <span className="text-[11px] tracking-[0.28em] text-cga-bcyan animate-blink">
+                        SUBJECT DISENGAGED
+                      </span>
+                      <span className="text-[8px] tracking-[0.2em] text-cga-gray">
+                        RESUMING PATROL · MOVE TO RE-ACQUIRE
+                      </span>
+                    </div>
+                  </div>
+                )}
+
                 {/* HUD: corner brackets */}
                 {cornerClasses.map((c) => (
                   <div
@@ -617,6 +654,9 @@ const AsciiArt = () => {
                   <div className="mono-command pointer-events-none absolute left-2 top-2 flex items-center gap-1 rounded-[1px] bg-cga-black/60 px-1.5 py-0.5 text-[8px] text-cga-bred">
                     <span className="inline-block h-1.5 w-1.5 bg-cga-bred animate-blink" />
                     REC
+                    <span className="text-cga-bcyan/90">
+                      <Timecode reduced={!!prefersReducedMotion} />
+                    </span>
                   </div>
                 )}
                 <div className="mono-command pointer-events-none absolute right-2 top-2 rounded-[1px] bg-cga-black/60 px-1.5 py-0.5 text-[8px] tracking-[0.18em] text-cga-bcyan">
@@ -625,7 +665,7 @@ const AsciiArt = () => {
                 {!teletext && (
                   <div className="mono-command pointer-events-none absolute bottom-2 left-2 flex flex-col gap-0.5 rounded-[1px] bg-cga-black/60 px-1.5 py-0.5 text-[8px] tabular-nums leading-tight">
                     <span className="text-cga-white/85">
-                      {DATE_LABEL} {clock}
+                      {fmtDate(new Date())} <span className="text-cga-cyan">LCL</span> {clock}
                     </span>
                     <span className="text-cga-bcyan">◎ {GPS_DECIMAL}</span>
                   </div>
@@ -785,7 +825,14 @@ const AsciiArt = () => {
         {/* footer */}
         <div className="mono-command relative z-20 mt-4 flex flex-col items-center gap-1.5 text-[10px] tracking-[0.18em] text-cga-cyan sm:grid sm:grid-cols-3 sm:items-center sm:gap-2">
           <span className="text-center sm:text-left">SECURITY TAPE</span>
-          <span className="text-center text-cga-gray">OXIDE 1-6</span>
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new Event("oxide:terminal"))}
+            aria-label="Open terminal"
+            className="mx-auto border border-cga-bgreen/50 bg-cga-black/80 px-2.5 py-1 text-[10px] tracking-[0.16em] text-cga-bgreen transition-colors hover:border-cga-bgreen hover:bg-cga-bgreen/10 hover:text-cga-white"
+          >
+            {">_ TERMINAL  [ ` ]"}
+          </button>
           <button
             type="button"
             onClick={() => {
