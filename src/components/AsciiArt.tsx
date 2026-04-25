@@ -488,9 +488,9 @@ const AsciiArt = () => {
         </div>
 
         <div className="relative border border-cga-bcyan/35 bg-cga-black px-4 py-4">
-          <div className="grid grid-cols-1 items-stretch gap-3 sm:gap-4">
-            {/* system log — hidden in the fixed split panel (md+) to save height, shown on the mobile scroll */}
-            <div className="flex h-[212px] min-w-0 flex-col overflow-hidden border border-cga-bcyan/25 bg-cga-black p-2.5 md:hidden lg:min-w-[220px]">
+          <div className="grid grid-cols-1 items-stretch gap-3 sm:gap-4 lg:grid-cols-[minmax(220px,1.35fr)_minmax(280px,2fr)_minmax(180px,1.1fr)]">
+            {/* system log — hidden only in the tablet split panel (md–lg); shown on mobile and on the laptop 3-column feed */}
+            <div className="flex h-[212px] min-w-0 flex-col overflow-hidden border border-cga-bcyan/25 bg-cga-black p-2.5 md:hidden lg:flex lg:min-w-[220px]">
               <div className="mono-command mb-2 border-b border-cga-bcyan/20 pb-1 text-[9px] text-cga-cyan">
                 cam-01@oxide:~
               </div>
@@ -519,7 +519,7 @@ const AsciiArt = () => {
                   <img
                     src={dither ? AVATAR_CGA : AVATAR_RAW}
                     alt="Partha Pratim Gogoi profile"
-                    className="h-full w-full object-contain"
+                    className="h-full w-full object-contain lg:object-cover"
                     style={{
                       objectPosition: "50% 50%",
                       filter: feedFilter,
