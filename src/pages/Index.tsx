@@ -77,15 +77,15 @@ const Index = () => {
   const taglineDelay = nameDelay + typedName.length * nameSpeed + 260;
 
   return (
-    <div className="relative z-10 min-h-screen overflow-hidden mono-ui md:flex md:h-screen">
-      {/* LEFT — subject identity: fixed + centered on md+, scrolls with the page on mobile */}
-      <aside className="flex flex-col justify-center px-6 py-6 sm:py-8 md:h-screen md:w-[44%] md:shrink-0 md:justify-start md:overflow-hidden lg:w-[40%]">
-        <div className="mx-auto w-full max-w-[560px] space-y-5">
+    <div className="relative z-10 min-h-screen overflow-hidden mono-ui md:flex md:h-screen lg:block lg:h-auto">
+      {/* LEFT — subject identity: split panel only in the tablet band (md–lg); laptop (lg+) collapses back to the original single column */}
+      <aside className="flex flex-col justify-center px-6 py-6 sm:py-8 md:h-screen md:w-[44%] md:shrink-0 md:justify-start md:overflow-hidden lg:h-auto lg:w-full lg:justify-center lg:overflow-visible lg:pb-0">
+        <div className="mx-auto w-full max-w-[560px] space-y-5 lg:flex lg:max-w-4xl lg:flex-col">
           <div className="terminal-title text-center md:text-left">
             [ SYSTEM :: OXIDE TERMINAL PORTFOLIO :: 198X MODE ]
           </div>
 
-          <motion.header {...fade(0.2)} className="text-center space-y-2">
+          <motion.header {...fade(0.2)} className="text-center space-y-2 lg:order-3">
             <h1 className="mono-command text-2xl sm:text-3xl font-bold text-foreground text-glow tracking-widest">
               <span className="opacity-90">{"> "}</span>
               <TypewriterText
@@ -105,15 +105,15 @@ const Index = () => {
             </p>
           </motion.header>
 
-          <div className="flex justify-center">
+          <div className="flex justify-center lg:order-2">
             <AsciiArt />
           </div>
         </div>
       </aside>
 
       {/* RIGHT — dossier content: scrolls independently on md+ */}
-      <main className="px-6 py-6 sm:py-8 md:h-screen md:flex-1 md:overflow-y-auto">
-        <div className="mx-auto w-full max-w-2xl space-y-6">
+      <main className="px-6 py-6 sm:py-8 md:h-screen md:flex-1 md:overflow-y-auto lg:h-auto lg:overflow-visible lg:pt-6">
+        <div className="mx-auto w-full max-w-2xl space-y-6 lg:max-w-4xl">
         <motion.nav
           {...fade(0.35)}
           className="mono-command text-center text-sm border-y border-primary/25 py-2"
