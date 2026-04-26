@@ -81,7 +81,7 @@ const Index = () => {
       {/* LEFT: subject identity panel. Fixed-height column from md up; scrolls internally if the cassette overflows a short viewport. */}
       <aside className="flex flex-col justify-center px-6 py-6 sm:py-8 md:h-screen md:w-[44%] md:shrink-0 md:justify-start md:overflow-y-auto">
         <div className="mx-auto w-full max-w-[560px] space-y-5">
-          <div className="terminal-title text-center md:text-left">
+          <div className="terminal-title text-center">
             [ SYSTEM :: OXIDE TERMINAL PORTFOLIO :: 198X MODE ]
           </div>
 
