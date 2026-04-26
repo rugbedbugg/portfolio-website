@@ -706,7 +706,8 @@ const AsciiArt = () => {
                     </button>
                   </div>
 
-                  {/* effect toggles */}
+                  {/* effect toggles: two columns so each reads as a button */}
+                  <div className="grid grid-cols-2 gap-1">
                   {toggles.map((opt, idx) => {
                     const marked = hoveredIndex === idx;
                     return (
@@ -743,6 +744,7 @@ const AsciiArt = () => {
                       </div>
                     );
                   })}
+                  </div>
                 </div>
 
                 {/* volume: segmented bar */}

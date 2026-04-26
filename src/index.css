@@ -18,13 +18,13 @@ All colors MUST be HSL.
     :root {
         /* IBM 5153 (CGA) palette, used semantically */
         --background: 0 0% 3%;
-        --foreground: 0 0% 72%; /* CGA light-gray #AAAAAA */
+        --foreground: 0 0% 90%; /* near-white #E5E5E5 */
 
         --card: 0 0% 5%;
-        --card-foreground: 0 0% 72%;
+        --card-foreground: 0 0% 90%;
 
         --popover: 0 0% 5%;
-        --popover-foreground: 0 0% 72%;
+        --popover-foreground: 0 0% 90%;
 
         --primary: 180 100% 60%; /* CGA bright cyan #55FFFF */
         --primary-foreground: 0 0% 0%;
