@@ -46,10 +46,10 @@ const PROJECTS = [
     tags: ["Rust", "DSA", "SQLite", "cli"],
   },
   {
-    title: "Dev-Tools-Assisstant",
+    title: "Dev-Tools-Assistant",
     description:
       "An agentic developer companion that crawls the web and suggests practical tools based on your stack, project type, and goals.",
-    href: "https://github.com/rugbedbugg/Dev-Tools-Assisstant",
+    href: "https://github.com/rugbedbugg/Dev-Tools-Assistant",
     tags: ["Python", "Automation", "Agentic", "Tooling"],
   },
   {
@@ -174,7 +174,7 @@ const Index = () => {
                     />
                     <span className="absolute inset-0 bg-[repeating-linear-gradient(to_bottom,rgba(85,255,255,0.05)_0px,rgba(85,255,255,0.05)_1px,transparent_1px,transparent_3px)]" />
                   </span>
-                  <div className="relative z-10 flex items-center justify-between gap-2 text-[10px] tracking-[0.14em] text-cga-cyan/70">
+                  <div className="relative z-10 flex items-center justify-between gap-2 text-[10px] tracking-[0.14em] text-cga-cyan">
                     <span>CLASS: {project.tags[0]?.toUpperCase()}</span>
                     <span className="flex items-center gap-1.5">
                       <span className="inline-block h-1.5 w-1.5 bg-cga-bgreen" />
@@ -223,7 +223,7 @@ const Index = () => {
                         {s.cta}
                       </span>
                     </span>
-                    <span className="mono-command shrink-0 text-[10px] tracking-[0.16em] text-cga-cyan opacity-60 transition-opacity group-hover:opacity-100">
+                    <span className="mono-command shrink-0 text-[10px] tracking-[0.16em] text-cga-cyan transition-colors group-hover:text-cga-bcyan">
                       CONNECT ▸
                     </span>
                   </ExtLink>
