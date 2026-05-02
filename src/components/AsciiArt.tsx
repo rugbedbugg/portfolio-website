@@ -2,6 +2,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { detectViewer, type Viewer } from "@/lib/viewer";
 import { recordVisit, relTime } from "@/lib/trace";
+import { GEO } from "@/lib/geo";
 
 // Portrait sources: real photo (RAW) by default, CGA-dithered via the DITHER toggle.
 const AVATAR_CGA = "/avatar-cga.png";
@@ -38,9 +39,6 @@ const MONTHS = [
 ];
 const fmtDate = (d: Date) =>
   `${WEEKDAYS[d.getDay()]} ${String(d.getDate()).padStart(2, "0")} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
-// Surveillance geo-tag for the camera HUD / subject dossier
-const GPS_DECIMAL = "12.911210, 79.132685";
-const GPS_DMS = "12°54'40\"N 79°07'57\"E";
 // VHS/NTSC interlaced resolution tag for the live header
 const LIVE_TAG = "[LIVE] · 480i";
 // base id for the "current viewer" - rendered with live-varying Zalgo corruption
@@ -553,7 +551,7 @@ const AsciiArt = () => {
                     <div>
                       STATUS : <span className="text-cga-bgreen">TRACED</span>
                     </div>
-                    <div>LOC    : {GPS_DMS}</div>
+                    <div>LOC    : {GEO.dms}</div>
                   </div>
                 )}
 
@@ -667,7 +665,7 @@ const AsciiArt = () => {
                     <span className="text-cga-white/85">
                       {fmtDate(new Date())} <span className="text-cga-cyan">LCL</span> {clock}
                     </span>
-                    <span className="text-cga-bcyan">◎ {GPS_DECIMAL}</span>
+                    <span className="text-cga-bcyan">◎ {GEO.decimal}</span>
                   </div>
                 )}
               </div>
