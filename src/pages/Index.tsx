@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import AsciiArt from "@/components/AsciiArt";
+import GlobalTrace from "@/components/GlobalTrace";
 import TypewriterText from "@/components/TypewriterText";
 import DossierPanel from "@/components/DossierPanel";
 import { ExtLink } from "@/components/Transmission";
@@ -154,6 +155,10 @@ const Index = () => {
               </p>
             </div>
           </DossierPanel>
+        </motion.section>
+
+        <motion.section {...fade(0.6)}>
+          <GlobalTrace />
         </motion.section>
 
         <motion.section {...fade(0.65)} id="projects">
