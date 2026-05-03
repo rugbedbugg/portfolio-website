@@ -485,24 +485,9 @@ const AsciiArt = () => {
           </div>
         </div>
 
-        <div className="relative border border-cga-bcyan/35 bg-cga-black px-4 py-4">
-          <div className="grid grid-cols-1 items-stretch gap-3 sm:gap-4">
-            {/* system log: shown on mobile, hidden inside the split identity panel from md up */}
-            <div className="flex h-[212px] min-w-0 flex-col overflow-hidden border border-cga-bcyan/25 bg-cga-black p-2.5 md:hidden">
-              <div className="mono-command mb-2 border-b border-cga-bcyan/20 pb-1 text-[9px] text-cga-cyan">
-                cam-01@oxide:~
-              </div>
-              <div className="mono-command h-[170px] space-y-1 overflow-hidden text-[8px] leading-relaxed text-cga-bgreen sm:text-[9px]">
-                {log.map((line, idx) => (
-                  <div key={`${line}-${idx}`} className="truncate">
-                    {line}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* center: surveillance feed */}
-            <div className="relative h-[212px] overflow-hidden border border-cga-bcyan/20 bg-cga-black p-2.5">
+        <div className="relative border border-cga-bcyan/35 bg-cga-black p-3 sm:p-4">
+          {/* CRT SCREEN */}
+          <div className="relative h-[228px] overflow-hidden rounded-[6px] border border-cga-bcyan/20 bg-cga-black p-2.5 sm:h-[260px]">
               <div
                 className="relative h-full overflow-hidden border border-cga-bcyan/15"
                 style={{
@@ -671,83 +656,73 @@ const AsciiArt = () => {
               </div>
             </div>
 
-            {/* right: monitor controls */}
-            <div className="flex h-[212px] min-w-0 flex-col overflow-hidden border border-cga-bcyan/25 bg-cga-black p-2.5">
-              <div className="mono-command mb-2 border-b border-cga-bcyan/20 pb-1 text-[8px] text-cga-cyan">
-                monitor.ctl
-              </div>
-              <div
-                className="mono-command flex min-h-0 flex-1 flex-col justify-between text-[8px]"
-                onMouseLeave={() => setHoveredIndex(null)}
-              >
-                <div className="flex-none space-y-1">
-                  {/* channel stepper */}
-                  <div className="flex items-center justify-between border border-cga-bcyan/25 bg-cga-bcyan/[0.05] px-2 py-[3px] text-cga-bcyan">
-                    <button
-                      type="button"
-                      aria-label="Previous channel"
-                      onClick={() => stepChannel(-1)}
-                      className="px-1 text-cga-cyan hover:text-cga-bcyan"
-                    >
-                      {"<"}
-                    </button>
-                    <span className="tracking-[0.16em]">
-                      {channelLabel} {CH_STATUS[channel]}
-                    </span>
-                    <button
-                      type="button"
-                      aria-label="Next channel"
-                      onClick={() => stepChannel(1)}
-                      className="px-1 text-cga-cyan hover:text-cga-bcyan"
-                    >
-                      {">"}
-                    </button>
-                  </div>
-
-                  {/* effect toggles: two columns so each reads as a button */}
-                  <div className="grid grid-cols-2 gap-1">
-                  {toggles.map((opt, idx) => {
-                    const marked = hoveredIndex === idx;
-                    return (
-                      <div
-                        key={opt.label}
-                        role="button"
-                        tabIndex={0}
-                        onMouseEnter={() => setHoveredIndex(idx)}
-                        onClick={opt.onToggle}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") opt.onToggle();
-                        }}
-                        className={`w-full cursor-pointer select-none border border-cga-bcyan/25 px-2 py-[3px] text-left transition-colors ${
-                          opt.active
-                            ? "bg-cga-bcyan text-cga-black"
-                            : "bg-cga-bcyan/[0.05] text-cga-cyan"
-                        }`}
-                      >
-                        <span
-                          className={`inline-block w-4 ${
-                            opt.active
-                              ? "text-cga-black"
-                              : marked
-                                ? "text-cga-bcyan"
-                                : "text-cga-cyan/40"
-                          }`}
-                        >
-                          {marked || opt.active ? ">" : "·"}
-                        </span>
-                        <span>{opt.label}</span>
-                        <span className="float-right inline-block w-8 text-right">
-                          {opt.active ? "ON" : "OFF"}
-                        </span>
-                      </div>
-                    );
-                  })}
-                  </div>
+            {/* CONTROL DECK */}
+            <div
+              className="mono-command mt-3 flex flex-col gap-2.5 border border-cga-bcyan/30 bg-cga-bcyan/[0.03] p-3 text-[10px]"
+              onMouseLeave={() => setHoveredIndex(null)}
+            >
+              {/* brand plate + channel tuner */}
+              <div className="flex flex-wrap items-center justify-between gap-2 tracking-[0.14em] text-cga-cyan">
+                <span className="text-cga-bcyan">
+                  OXIDE-6 <span className="text-cga-gray">// MDL CRT-198X</span>
+                </span>
+                <div className="flex items-center gap-2 border border-cga-bcyan/25 bg-cga-bcyan/[0.05] px-2 py-1 text-cga-bcyan">
+                  <button
+                    type="button"
+                    aria-label="Previous channel"
+                    onClick={() => stepChannel(-1)}
+                    className="px-1 text-cga-cyan hover:text-cga-bcyan"
+                  >
+                    {"<"}
+                  </button>
+                  <span className="tracking-[0.16em]">
+                    {channelLabel} {CH_STATUS[channel]}
+                  </span>
+                  <button
+                    type="button"
+                    aria-label="Next channel"
+                    onClick={() => stepChannel(1)}
+                    className="px-1 text-cga-cyan hover:text-cga-bcyan"
+                  >
+                    {">"}
+                  </button>
                 </div>
+              </div>
 
-                {/* volume: segmented bar */}
-                <div className="mt-2 flex-none border border-cga-bcyan/25 bg-cga-bcyan/[0.05] px-2 py-1.5">
-                  <div className="mb-1 flex items-center justify-between text-[8px] text-cga-cyan">
+              {/* effect toggles + meters */}
+              <div className="flex flex-wrap items-stretch gap-2">
+                {toggles.map((opt, idx) => {
+                  const marked = hoveredIndex === idx;
+                  return (
+                    <button
+                      key={opt.label}
+                      type="button"
+                      onMouseEnter={() => setHoveredIndex(idx)}
+                      onClick={opt.onToggle}
+                      className={`flex items-center gap-1.5 border px-2.5 py-1.5 tracking-[0.1em] transition-colors ${
+                        opt.active
+                          ? "border-cga-white bg-cga-bcyan text-cga-black"
+                          : "border-cga-bcyan/30 bg-cga-bcyan/[0.05] text-cga-cyan hover:bg-cga-bcyan/10"
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-2 w-2 rounded-full ${
+                          opt.active
+                            ? "bg-cga-black"
+                            : marked
+                              ? "bg-cga-bcyan"
+                              : "bg-cga-cyan/40"
+                        }`}
+                      />
+                      {opt.label}
+                      <span className="ml-0.5 opacity-80">{opt.active ? "ON" : "OFF"}</span>
+                    </button>
+                  );
+                })}
+
+                {/* volume */}
+                <div className="flex w-[120px] flex-col justify-center border border-cga-bcyan/25 bg-cga-bcyan/[0.05] px-2 py-1.5">
+                  <div className="mb-1 flex items-center justify-between text-[9px] text-cga-cyan">
                     <span>VOL</span>
                     <span className="text-cga-bcyan">{Math.round(volume * 100)}%</span>
                   </div>
@@ -782,44 +757,61 @@ const AsciiArt = () => {
                   </div>
                 </div>
 
-                {/* signal spectrum meter */}
-                <div className="mt-2 flex-none overflow-hidden border border-cga-bcyan/25 bg-cga-bcyan/[0.05] px-2 py-1">
-                  <div className="mb-0.5 text-[8px] text-cga-cyan">SIGNAL</div>
+                {/* signal */}
+                <div className="flex w-[168px] flex-col justify-center overflow-hidden border border-cga-bcyan/25 bg-cga-bcyan/[0.05] px-2 py-1.5">
+                  <div className="mb-0.5 text-[9px] text-cga-cyan">SIGNAL</div>
                   <canvas
                     ref={canvasRef}
                     width={160}
                     height={26}
-                    className="h-[22px] w-full"
+                    className="h-[22px] w-[152px]"
                   />
                 </div>
               </div>
+
+              {/* transport */}
+              <div className="flex flex-wrap justify-center gap-2">
+                {transport.map((btn) => (
+                  <button
+                    key={btn.label}
+                    type="button"
+                    onClick={btn.onClick}
+                    className={`mono-command flex min-w-[80px] flex-col items-center justify-center gap-1 border-2 px-4 py-2.5 tracking-[0.12em] transition-colors ${
+                      btn.active
+                        ? "border-cga-white bg-cga-bcyan text-cga-black"
+                        : "border-cga-bcyan/40 bg-cga-bcyan/[0.05] text-cga-bcyan hover:bg-cga-bcyan/15"
+                    }`}
+                  >
+                    <span className="text-[15px] leading-none">{btn.icon}</span>
+                    <span className="text-[11px] leading-none">{btn.label}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* status readout + speaker grille */}
+              <div className="flex items-center justify-between gap-3">
+                <span className="flex items-center gap-1.5 tracking-[0.14em] text-cga-bred">
+                  <span className="inline-block h-2 w-2 bg-cga-bred animate-blink" />
+                  REC
+                </span>
+                <span className="flex-1 text-center tracking-[0.16em] text-cga-bcyan">
+                  {statusText}
+                </span>
+                <span
+                  aria-hidden="true"
+                  className="h-3.5 w-16 bg-[repeating-linear-gradient(to_right,rgba(85,255,255,0.35)_0px,rgba(85,255,255,0.35)_2px,transparent_2px,transparent_5px)]"
+                />
+              </div>
+
+              {/* system log (mobile) */}
+              <div className="h-[76px] overflow-hidden border border-cga-bcyan/20 bg-cga-black p-2 text-[9px] leading-relaxed text-cga-bgreen md:hidden">
+                {log.map((line, idx) => (
+                  <div key={`${line}-${idx}`} className="truncate">
+                    {line}
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-
-          {/* beefy transport */}
-          <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {transport.map((btn) => (
-              <button
-                key={btn.label}
-                type="button"
-                onClick={btn.onClick}
-                className={`mono-command flex w-full flex-col items-center justify-center gap-1 border-2 px-2 py-3 tracking-[0.12em] transition-colors ${
-                  btn.active
-                    ? "border-cga-white bg-cga-bcyan text-cga-black"
-                    : "border-cga-bcyan/40 bg-cga-bcyan/[0.05] text-cga-bcyan hover:bg-cga-bcyan/15"
-                }`}
-              >
-                <span className="text-[13px] leading-none">{btn.icon}</span>
-                <span className="text-[10px] leading-none sm:text-[11px]">{btn.label}</span>
-              </button>
-            ))}
-          </div>
-
-          <div className="mono-command mt-3 h-4 text-center text-[10px] tracking-[0.16em] text-cga-bcyan">
-            {statusText}
-          </div>
-
-          <div className="mt-4 h-1.5 border border-cga-bcyan/25 bg-cga-bcyan/15" />
         </div>
 
         {/* footer */}
