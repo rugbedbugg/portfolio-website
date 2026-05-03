@@ -150,6 +150,8 @@ const AsciiArt = () => {
   const [turbo, setTurbo] = useState(false);
   const [invert, setInvert] = useState(false);
   const [dither, setDither] = useState(false);
+  const [mono, setMono] = useState(false);
+  const [gain, setGain] = useState(false);
 
   const [channel, setChannel] = useState(CH_SUBJECT);
   const [volume, setVolume] = useState(0.3);
@@ -389,6 +391,22 @@ const AsciiArt = () => {
     });
   };
 
+  const toggleMono = () => {
+    setMono((m) => {
+      pushLog(m ? "$ chroma --on" : "$ chroma --off");
+      setStatusText(m ? "COLOR FEED" : "MONO FEED");
+      return !m;
+    });
+  };
+
+  const toggleGain = () => {
+    setGain((g) => {
+      pushLog(g ? "$ gain --normal" : "$ gain --boost");
+      setStatusText(g ? "GAIN NORMAL" : "GAIN BOOST");
+      return !g;
+    });
+  };
+
   const setVol = (v: number) => {
     const clamped = Math.max(0, Math.min(1, v));
     setVolume(clamped);
@@ -405,7 +423,12 @@ const AsciiArt = () => {
   );
 
   const feedFilter =
-    [dither ? "" : rawFilter, invert ? "invert(1)" : ""]
+    [
+      dither ? "" : rawFilter,
+      invert ? "invert(1)" : "",
+      mono ? "grayscale(1)" : "",
+      gain ? "brightness(1.35) contrast(1.1)" : "",
+    ]
       .filter(Boolean)
       .join(" ") || undefined;
 
@@ -413,6 +436,8 @@ const AsciiArt = () => {
     [
       { label: "INVERT", active: invert, onToggle: toggleInvert },
       { label: "DITHER", active: dither, onToggle: toggleDither },
+      { label: "MONO", active: mono, onToggle: toggleMono },
+      { label: "GAIN", active: gain, onToggle: toggleGain },
     ];
 
   const transport: Array<{
@@ -527,7 +552,7 @@ const AsciiArt = () => {
 
                 {/* CH 04 — teletext subject file */}
                 {!jamming && channel === 4 && (
-                  <div className="mono-command absolute inset-0 flex flex-col justify-center gap-1 px-4 text-[9px] leading-relaxed text-cga-bcyan">
+                  <div className="mono-command absolute inset-0 flex flex-col justify-center gap-1 px-4 text-[11px] leading-relaxed text-cga-bcyan">
                     <div className="text-cga-yellow">SUBJECT FILE :: CH 04</div>
                     <div className="text-cga-bcyan/40">--------------------</div>
                     <div>ID     : OXIDE 1-6</div>
@@ -542,7 +567,7 @@ const AsciiArt = () => {
 
                 {/* CH 05 — the visitor's own dossier ("we see you") */}
                 {!jamming && channel === 5 && (
-                  <div className="mono-command absolute inset-0 flex flex-col justify-center gap-1 px-4 text-[9px] leading-relaxed text-cga-bcyan">
+                  <div className="mono-command absolute inset-0 flex flex-col justify-center gap-1 px-4 text-[11px] leading-relaxed text-cga-bcyan">
                     <div className="flex items-center justify-between text-cga-bred">
                       <span>VIEWER FILE :: CH 05</span>
                       <span className="flex items-center gap-1">
@@ -591,7 +616,7 @@ const AsciiArt = () => {
                     <span className="text-[11px] tracking-[0.3em] text-cga-bcyan">
                       {noticeText.big}
                     </span>
-                    <span className="text-[8px] tracking-[0.2em] text-cga-gray">
+                    <span className="text-[11px] tracking-[0.2em] text-cga-gray">
                       {noticeText.small}
                     </span>
                   </div>
@@ -618,7 +643,7 @@ const AsciiArt = () => {
                       <span className="text-[11px] tracking-[0.28em] text-cga-bcyan animate-blink">
                         SUBJECT DISENGAGED
                       </span>
-                      <span className="text-[8px] tracking-[0.2em] text-cga-gray">
+                      <span className="text-[11px] tracking-[0.2em] text-cga-gray">
                         RESUMING PATROL · MOVE TO RE-ACQUIRE
                       </span>
                     </div>
@@ -634,7 +659,7 @@ const AsciiArt = () => {
                 ))}
                 {/* HUD: REC / channel / timestamp (dark OSD chips keep text legible over any feed) */}
                 {!teletext && (
-                  <div className="mono-command pointer-events-none absolute left-2 top-2 flex items-center gap-1 rounded-[1px] bg-cga-black/60 px-1.5 py-0.5 text-[8px] text-cga-bred">
+                  <div className="mono-command pointer-events-none absolute left-2 top-2 flex items-center gap-1 rounded-[1px] bg-cga-black/60 px-1.5 py-0.5 text-[11px] text-cga-bred">
                     <span className="inline-block h-1.5 w-1.5 bg-cga-bred animate-blink" />
                     REC
                     <span className="text-cga-bcyan/90">
@@ -642,11 +667,11 @@ const AsciiArt = () => {
                     </span>
                   </div>
                 )}
-                <div className="mono-command pointer-events-none absolute right-2 top-2 rounded-[1px] bg-cga-black/60 px-1.5 py-0.5 text-[8px] tracking-[0.18em] text-cga-bcyan">
+                <div className="mono-command pointer-events-none absolute right-2 top-2 rounded-[1px] bg-cga-black/60 px-1.5 py-0.5 text-[11px] tracking-[0.18em] text-cga-bcyan">
                   {channelLabel}
                 </div>
                 {!teletext && (
-                  <div className="mono-command pointer-events-none absolute bottom-2 left-2 flex flex-col gap-0.5 rounded-[1px] bg-cga-black/60 px-1.5 py-0.5 text-[8px] tabular-nums leading-tight">
+                  <div className="mono-command pointer-events-none absolute bottom-2 left-2 flex flex-col gap-0.5 rounded-[1px] bg-cga-black/60 px-1.5 py-0.5 text-[11px] tabular-nums leading-tight">
                     <span className="text-cga-white/85">
                       {fmtDate(new Date())} <span className="text-cga-cyan">LCL</span> {clock}
                     </span>
@@ -658,13 +683,13 @@ const AsciiArt = () => {
 
             {/* CONTROL DECK */}
             <div
-              className="mono-command mt-3 flex flex-col gap-2.5 border border-cga-bcyan/30 bg-cga-bcyan/[0.03] p-3 text-[10px]"
+              className="deck mono-command mt-3 flex flex-col gap-2 border border-cga-bcyan/30 bg-cga-bcyan/[0.03] p-3 text-[10px]"
               onMouseLeave={() => setHoveredIndex(null)}
             >
               {/* brand plate + channel tuner */}
               <div className="flex flex-wrap items-center justify-between gap-2 tracking-[0.14em] text-cga-cyan">
                 <span className="text-cga-bcyan">
-                  OXIDE-6 <span className="text-cga-gray">// MDL CRT-198X</span>
+                  OXIDE 1-6 <span className="text-cga-gray">// MDL CRT-198X</span>
                 </span>
                 <div className="flex items-center gap-2 border border-cga-bcyan/25 bg-cga-bcyan/[0.05] px-2 py-1 text-cga-bcyan">
                   <button
@@ -689,8 +714,8 @@ const AsciiArt = () => {
                 </div>
               </div>
 
-              {/* effect toggles + meters */}
-              <div className="flex flex-wrap items-stretch gap-2">
+              {/* effect toggles: 4-across, reflow to 2x2 when the deck is narrow */}
+              <div className="deck-btn-grid">
                 {toggles.map((opt, idx) => {
                   const marked = hoveredIndex === idx;
                   return (
@@ -699,7 +724,7 @@ const AsciiArt = () => {
                       type="button"
                       onMouseEnter={() => setHoveredIndex(idx)}
                       onClick={opt.onToggle}
-                      className={`flex items-center gap-1.5 border px-2.5 py-1.5 tracking-[0.1em] transition-colors ${
+                      className={`flex items-center justify-center gap-1.5 border-2 px-2.5 py-2.5 tracking-[0.1em] transition-colors ${
                         opt.active
                           ? "border-cga-white bg-cga-bcyan text-cga-black"
                           : "border-cga-bcyan/30 bg-cga-bcyan/[0.05] text-cga-cyan hover:bg-cga-bcyan/10"
@@ -715,13 +740,15 @@ const AsciiArt = () => {
                         }`}
                       />
                       {opt.label}
-                      <span className="ml-0.5 opacity-80">{opt.active ? "ON" : "OFF"}</span>
                     </button>
                   );
                 })}
+              </div>
 
+              {/* meters: volume over signal, full width */}
+              <div className="flex flex-col gap-2">
                 {/* volume */}
-                <div className="flex w-[120px] flex-col justify-center border border-cga-bcyan/25 bg-cga-bcyan/[0.05] px-2 py-1.5">
+                <div className="flex w-full flex-col justify-center border border-cga-bcyan/25 bg-cga-bcyan/[0.05] px-2 py-1.5">
                   <div className="mb-1 flex items-center justify-between text-[9px] text-cga-cyan">
                     <span>VOL</span>
                     <span className="text-cga-bcyan">{Math.round(volume * 100)}%</span>
@@ -758,25 +785,25 @@ const AsciiArt = () => {
                 </div>
 
                 {/* signal */}
-                <div className="flex w-[168px] flex-col justify-center overflow-hidden border border-cga-bcyan/25 bg-cga-bcyan/[0.05] px-2 py-1.5">
+                <div className="flex w-full flex-col justify-center overflow-hidden border border-cga-bcyan/25 bg-cga-bcyan/[0.05] px-2 py-1.5">
                   <div className="mb-0.5 text-[9px] text-cga-cyan">SIGNAL</div>
                   <canvas
                     ref={canvasRef}
                     width={160}
                     height={26}
-                    className="h-[22px] w-[152px]"
+                    className="h-[22px] w-full"
                   />
                 </div>
               </div>
 
               {/* transport */}
-              <div className="flex flex-wrap justify-center gap-2">
+              <div className="deck-btn-grid">
                 {transport.map((btn) => (
                   <button
                     key={btn.label}
                     type="button"
                     onClick={btn.onClick}
-                    className={`mono-command flex min-w-[80px] flex-col items-center justify-center gap-1 border-2 px-4 py-2.5 tracking-[0.12em] transition-colors ${
+                    className={`mono-command flex flex-col items-center justify-center gap-1 border-2 px-2.5 py-2.5 tracking-[0.12em] transition-colors ${
                       btn.active
                         ? "border-cga-white bg-cga-bcyan text-cga-black"
                         : "border-cga-bcyan/40 bg-cga-bcyan/[0.05] text-cga-bcyan hover:bg-cga-bcyan/15"
