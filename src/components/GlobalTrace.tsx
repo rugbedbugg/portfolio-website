@@ -6,10 +6,10 @@ import { WORLD_MAP_ROWS, WORLD_MAP_MARKER } from "@/lib/worldMap";
 // The land grid is embedded (see src/lib/worldMap.ts); coords come from the shared GEO.
 const GlobalTrace = () => (
   <DossierPanel label="GLOBAL TRACE" code="REF://GEO.LOC">
-    <div className="overflow-x-auto">
+    <div className="global-trace-map">
       <pre
         aria-hidden="true"
-        className="mono-command w-max select-none text-cga-cyan/70 text-[5px] leading-[6px] tracking-[1px] sm:text-[6px] sm:leading-[7px] sm:tracking-[1.5px] md:text-[7px] md:leading-[8px] md:tracking-[2px]"
+        className="global-trace-grid mono-command select-none text-cga-cyan/70"
       >
         {WORLD_MAP_ROWS.map((row, r) => {
           if (r !== WORLD_MAP_MARKER.row) return <div key={r}>{row}</div>;
@@ -17,7 +17,12 @@ const GlobalTrace = () => (
           return (
             <div key={r}>
               {row.slice(0, c)}
-              <span className="text-cga-bred animate-blink">◆</span>
+              <span className="gt-marker" aria-hidden="true">
+                <span className="gt-ring" />
+                <span className="gt-ring" />
+                <span className="gt-ring" />
+                <span className="gt-dot" />
+              </span>
               {row.slice(c + 1)}
             </div>
           );
