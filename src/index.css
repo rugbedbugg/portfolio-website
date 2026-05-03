@@ -361,6 +361,21 @@ All colors MUST be HSL.
     display: none;
 }
 
+/* CRT deck: button rows reflow by the deck's own width (4-across when roomy, 2x2 when tight) */
+.deck {
+    container-type: inline-size;
+}
+.deck-btn-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+}
+@container (min-width: 380px) {
+    .deck-btn-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
 /* GLOBAL TRACE: scale the dot-matrix grid to fill its panel width, centered */
 .global-trace-map {
     container-type: inline-size;
