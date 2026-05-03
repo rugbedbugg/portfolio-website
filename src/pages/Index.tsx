@@ -80,7 +80,7 @@ const Index = () => {
   return (
     <div className="relative z-10 min-h-screen overflow-hidden mono-ui md:flex md:h-screen">
       {/* LEFT: subject identity panel. Fixed-height column from md up; scrolls internally if the cassette overflows a short viewport. */}
-      <aside className="flex flex-col justify-center px-6 py-6 sm:py-8 md:h-screen md:w-[44%] md:shrink-0 md:justify-start md:overflow-y-auto">
+      <aside className="no-scrollbar flex flex-col justify-center px-6 py-6 sm:py-8 md:h-screen md:w-[44%] md:shrink-0 md:justify-start md:overflow-y-auto">
         <div className="mx-auto w-full max-w-[560px] space-y-5">
           <div className="terminal-title text-center">
             [ SYSTEM :: OXIDE TERMINAL PORTFOLIO :: 198X MODE ]
@@ -113,7 +113,7 @@ const Index = () => {
       </aside>
 
       {/* RIGHT — dossier content: scrolls independently on md+ */}
-      <main className="px-6 py-6 sm:py-8 md:h-screen md:flex-1 md:overflow-y-auto">
+      <main className="no-scrollbar px-6 py-6 sm:py-8 md:h-screen md:flex-1 md:overflow-y-auto">
         <div className="mx-auto w-full max-w-2xl space-y-6">
         <motion.nav
           {...fade(0.35)}
