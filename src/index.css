@@ -365,12 +365,29 @@ All colors MUST be HSL.
 .deck {
     container-type: inline-size;
 }
+.deck-head {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.deck-tuner {
+    width: 100%;
+}
 .deck-btn-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.5rem;
 }
-@container (min-width: 380px) {
+@container (min-width: 400px) {
+    .deck-head {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .deck-tuner {
+        width: 210px;
+        flex-shrink: 0;
+    }
     .deck-btn-grid {
         grid-template-columns: repeat(4, minmax(0, 1fr));
     }

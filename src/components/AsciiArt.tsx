@@ -2,7 +2,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { detectViewer, type Viewer } from "@/lib/viewer";
 import { recordVisit, relTime } from "@/lib/trace";
-import { GEO } from "@/lib/geo";
+import { useRelay } from "@/lib/useRelay";
 
 // Portrait sources: real photo (RAW) by default, CGA-dithered via the DITHER toggle.
 const AVATAR_CGA = "/avatar-cga.png";
@@ -161,6 +161,7 @@ const AsciiArt = () => {
   const [trackMeta, setTrackMeta] = useState(TRACK_META[0]);
   const [clock, setClock] = useState(() => fmtClock(new Date()));
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const relay = useRelay();
   const [log, setLog] = useState<string[]>([
     "cam-01@oxide:~$ boot feed",
     "[ok] sensor array online",
@@ -561,7 +562,7 @@ const AsciiArt = () => {
                     <div>
                       STATUS : <span className="text-cga-bgreen">TRACED</span>
                     </div>
-                    <div>LOC    : {GEO.dms}</div>
+                    <div>LOC    : {relay.dms}</div>
                   </div>
                 )}
 
@@ -675,7 +676,7 @@ const AsciiArt = () => {
                     <span className="text-cga-white/85">
                       {fmtDate(new Date())} <span className="text-cga-cyan">LCL</span> {clock}
                     </span>
-                    <span className="text-cga-bcyan">◎ {GEO.decimal}</span>
+                    <span className="text-cga-bcyan">◎ {relay.decimal}</span>
                   </div>
                 )}
               </div>
@@ -687,11 +688,11 @@ const AsciiArt = () => {
               onMouseLeave={() => setHoveredIndex(null)}
             >
               {/* brand plate + channel tuner */}
-              <div className="flex flex-wrap items-center justify-between gap-2 tracking-[0.14em] text-cga-cyan">
-                <span className="text-cga-bcyan">
-                  OXIDE 1-6 <span className="text-cga-gray">// MDL CRT-198X</span>
+              <div className="deck-head tracking-[0.14em] text-cga-cyan">
+                <span className="shrink-0 whitespace-nowrap text-cga-bcyan">
+                  OXIDE 1-6 <span className="text-cga-gray">// CRT-198X</span>
                 </span>
-                <div className="flex items-center gap-2 border border-cga-bcyan/25 bg-cga-bcyan/[0.05] px-2 py-1 text-cga-bcyan">
+                <div className="deck-tuner flex items-center justify-between gap-2 border border-cga-bcyan/25 bg-cga-bcyan/[0.05] px-2 py-1 text-cga-bcyan">
                   <button
                     type="button"
                     aria-label="Previous channel"
@@ -700,7 +701,7 @@ const AsciiArt = () => {
                   >
                     {"<"}
                   </button>
-                  <span className="tracking-[0.16em]">
+                  <span className="flex-1 truncate text-center tracking-[0.16em]">
                     {channelLabel} {CH_STATUS[channel]}
                   </span>
                   <button
@@ -843,7 +844,7 @@ const AsciiArt = () => {
 
         {/* footer */}
         <div className="mono-command relative z-20 mt-4 flex flex-col items-center gap-1.5 text-[10px] tracking-[0.18em] text-cga-cyan sm:grid sm:grid-cols-3 sm:items-center sm:gap-2">
-          <span className="text-center sm:text-left">SECURITY TAPE</span>
+          <span className="text-center sm:text-left">SIGNAL RELAY</span>
           <button
             type="button"
             onClick={() => window.dispatchEvent(new Event("oxide:terminal"))}
