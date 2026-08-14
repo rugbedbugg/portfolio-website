@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import AsciiArt from "@/components/AsciiArt";
+import GlobalTrace from "@/components/GlobalTrace";
 import TypewriterText from "@/components/TypewriterText";
 import DossierPanel from "@/components/DossierPanel";
 import { ExtLink } from "@/components/Transmission";
@@ -46,10 +47,10 @@ const PROJECTS = [
     tags: ["Rust", "DSA", "SQLite", "cli"],
   },
   {
-    title: "Dev-Tools-Assisstant",
+    title: "Dev-Tools-Assistant",
     description:
       "An agentic developer companion that crawls the web and suggests practical tools based on your stack, project type, and goals.",
-    href: "https://github.com/rugbedbugg/Dev-Tools-Assisstant",
+    href: "https://github.com/rugbedbugg/Dev-Tools-Assistant",
     tags: ["Python", "Automation", "Agentic", "Tooling"],
   },
   {
@@ -77,15 +78,15 @@ const Index = () => {
   const taglineDelay = nameDelay + typedName.length * nameSpeed + 260;
 
   return (
-    <div className="relative z-10 min-h-screen overflow-hidden mono-ui md:flex md:h-screen lg:block lg:h-auto">
-      {/* LEFT — subject identity: split panel only in the tablet band (md–lg); laptop (lg+) collapses back to the original single column */}
-      <aside className="flex flex-col justify-center px-6 py-6 sm:py-8 md:h-screen md:w-[44%] md:shrink-0 md:justify-start md:overflow-hidden lg:h-auto lg:w-full lg:justify-center lg:overflow-visible lg:pb-0">
-        <div className="mx-auto w-full max-w-[560px] space-y-5 lg:flex lg:max-w-4xl lg:flex-col">
-          <div className="terminal-title text-center md:text-left">
+    <div className="relative z-10 min-h-screen overflow-hidden mono-ui md:flex md:h-screen">
+      {/* LEFT: subject identity panel. Fixed-height column from md up; scrolls internally if the cassette overflows a short viewport. */}
+      <aside className="no-scrollbar flex flex-col justify-center px-6 py-6 sm:py-8 md:h-screen md:w-[44%] md:shrink-0 md:justify-start md:overflow-y-auto">
+        <div className="mx-auto w-full max-w-[560px] space-y-5">
+          <div className="terminal-title text-center">
             [ SYSTEM :: OXIDE TERMINAL PORTFOLIO :: 198X MODE ]
           </div>
 
-          <motion.header {...fade(0.2)} className="text-center space-y-2 lg:order-3">
+          <motion.header {...fade(0.2)} className="text-center space-y-2">
             <h1 className="mono-command text-2xl sm:text-3xl font-bold text-foreground text-glow tracking-widest">
               <span className="opacity-90">{"> "}</span>
               <TypewriterText
@@ -105,15 +106,15 @@ const Index = () => {
             </p>
           </motion.header>
 
-          <div className="flex justify-center lg:order-2">
+          <div className="flex justify-center">
             <AsciiArt />
           </div>
         </div>
       </aside>
 
       {/* RIGHT — dossier content: scrolls independently on md+ */}
-      <main className="px-6 py-6 sm:py-8 md:h-screen md:flex-1 md:overflow-y-auto lg:h-auto lg:overflow-visible lg:pt-6">
-        <div className="mx-auto w-full max-w-2xl space-y-6 lg:max-w-4xl">
+      <main className="no-scrollbar px-6 py-6 sm:py-8 md:h-screen md:flex-1 md:overflow-y-auto">
+        <div className="mx-auto w-full max-w-2xl space-y-6">
         <motion.nav
           {...fade(0.35)}
           className="mono-command text-center text-sm border-y border-primary/25 py-2"
@@ -156,6 +157,10 @@ const Index = () => {
           </DossierPanel>
         </motion.section>
 
+        <motion.section {...fade(0.6)}>
+          <GlobalTrace />
+        </motion.section>
+
         <motion.section {...fade(0.65)} id="projects">
           <DossierPanel label="CASE FILES" code="REF://PROJECTS.EXE">
             <div className="grid gap-3">
@@ -174,7 +179,7 @@ const Index = () => {
                     />
                     <span className="absolute inset-0 bg-[repeating-linear-gradient(to_bottom,rgba(85,255,255,0.05)_0px,rgba(85,255,255,0.05)_1px,transparent_1px,transparent_3px)]" />
                   </span>
-                  <div className="relative z-10 flex items-center justify-between gap-2 text-[10px] tracking-[0.14em] text-cga-cyan/70">
+                  <div className="relative z-10 flex items-center justify-between gap-2 text-[10px] tracking-[0.14em] text-cga-cyan">
                     <span>CLASS: {project.tags[0]?.toUpperCase()}</span>
                     <span className="flex items-center gap-1.5">
                       <span className="inline-block h-1.5 w-1.5 bg-cga-bgreen" />
@@ -223,7 +228,7 @@ const Index = () => {
                         {s.cta}
                       </span>
                     </span>
-                    <span className="mono-command shrink-0 text-[10px] tracking-[0.16em] text-cga-cyan opacity-60 transition-opacity group-hover:opacity-100">
+                    <span className="mono-command shrink-0 text-[10px] tracking-[0.16em] text-cga-cyan transition-colors group-hover:text-cga-bcyan">
                       CONNECT ▸
                     </span>
                   </ExtLink>
