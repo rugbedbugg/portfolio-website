@@ -557,8 +557,8 @@ const AsciiArt = () => {
                     <div className="text-cga-yellow">SUBJECT FILE :: CH 04</div>
                     <div className="text-cga-bcyan/40">--------------------</div>
                     <div>ID     : OXIDE 1-6</div>
-                    <div>CLASS  : CTF · FORENSICS</div>
-                    <div>FOCUS  : LOW-LEVEL / RE</div>
+                    <div>CLASS  : AI · LOW-LEVEL</div>
+                    <div>FOCUS  : AGENTS / RE</div>
                     <div>
                       STATUS : <span className="text-cga-bgreen">TRACED</span>
                     </div>

@@ -10,7 +10,7 @@ import { recordVisit, relTime } from "@/lib/trace";
 const PROFILE = {
   name: "Partha P.G.",
   aliases: "Oxide 1-6 // Arsenic 1-6 // rugbedbugg",
-  tagline: "Cyber Forensics Enthusiast & CTF Player",
+  tagline: "AI & Low-Level Systems",
   email: "mailto:yes.par781@gmail.com",
   // Set to a real path once available, e.g. "/resume.pdf". Empty hides the button.
   resumeUrl: "",
@@ -40,18 +40,25 @@ const SOCIALS = [
 
 const PROJECTS = [
   {
+    title: "ReAgent",
+    description:
+      "An agentic retrosynthesis framework that plans reaction routes with evidence-grounded, multi-objective scoring and forward-validating filter-model checks.",
+    href: "https://github.com/rugbedbugg/ReAgent",
+    tags: ["Python", "Agentic", "LLM", "Scoring"],
+  },
+  {
+    title: "Trionda-Trifecta-26",
+    description:
+      "A FIFA World Cup predictor with leakage-safe features, W/D/L and scoreline models, and a full-bracket 2026 simulation that calls Spain to lift the trophy.",
+    href: "https://github.com/rugbedbugg/Trionda-Trifecta-26",
+    tags: ["Python", "ML", "Modeling", "Simulation"],
+  },
+  {
     title: "ResonanceID-cli",
     description:
       "A Shazam-inspired Rust CLI that fingerprints WAV audio, ranks candidate matches, and backs everything with SQLite for fast, explainable lookup.",
     href: "https://github.com/rugbedbugg/ResonanceID-cli",
-    tags: ["Rust", "DSA", "SQLite", "cli"],
-  },
-  {
-    title: "Dev-Tools-Assistant",
-    description:
-      "An agentic developer companion that crawls the web and suggests practical tools based on your stack, project type, and goals.",
-    href: "https://github.com/rugbedbugg/Dev-Tools-Assistant",
-    tags: ["Python", "Automation", "Agentic", "Tooling"],
+    tags: ["Rust", "DSP", "SQLite", "cli"],
   },
   {
     title: "HTTP-SVR-200-OK",
@@ -139,19 +146,19 @@ const Index = () => {
           >
             <div className="mono-command max-w-2xl space-y-4 text-[1rem] leading-8 text-foreground">
               <p>
-                I enjoy solving CTF challenges and studying cyber forensics with
-                a hands-on approach. I like to break systems down, understand
-                why they work, and rebuild them in a cleaner way.
+                I build things to understand them. My instinct with any system
+                is to take it apart, see why it holds together, and put it back
+                cleaner. That is most of how I learn and how I think.
               </p>
               <p>
-                My work usually sits between low-level systems, practical
-                security workflows, and small developer tools that are simple,
-                fast, and useful.
+                I'm pulled toward the parts of software people treat as a black
+                box, and toward AI, especially agents and systems that act on
+                their own. I would rather know what is happening underneath than
+                trust the surface.
               </p>
-              <p className="text-[0.92rem] leading-7 text-muted-foreground pt-1">
-                Right now, I'm focused on practical security engineering,
-                reverse-oriented thinking, and building tools that reduce
-                friction for real workflows.
+              <p>
+                What I make is usually one of two things: a rebuild done to learn
+                how something works, or a tool built because it needed to exist.
               </p>
             </div>
           </DossierPanel>
