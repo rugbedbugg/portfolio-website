@@ -40,7 +40,7 @@ const MONTHS = [
 const fmtDate = (d: Date) =>
   `${WEEKDAYS[d.getDay()]} ${String(d.getDate()).padStart(2, "0")} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 // VHS/NTSC interlaced resolution tag for the live header
-const LIVE_TAG = "[LIVE] · 480i";
+const LIVE_TAG = "[LIVE] · 1080p";
 // base id for the "current viewer" - rendered with live-varying Zalgo corruption
 const VIEWER_BASE = "YOU";
 const VOL_SEGMENTS = 12;
@@ -506,7 +506,7 @@ const AsciiArt = () => {
               <span className="inline-block h-2 w-2 bg-cga-bred animate-blink" />
               {LIVE_TAG}
             </span>
-            <span className="truncate text-center text-cga-gray">{trackMeta}</span>
+            <span className="hidden truncate text-center text-cga-gray md:block">{trackMeta}</span>
             <span className="text-right tabular-nums text-cga-bcyan">{clock}</span>
           </div>
         </div>
@@ -682,9 +682,33 @@ const AsciiArt = () => {
               </div>
             </div>
 
+            {/* mobile: slim channel flip under the screen — the full deck is
+                desktop-only, so the single-column view keeps just screen + tuner */}
+            <div className="deck-tuner-mobile mono-command mt-3 flex items-center justify-between gap-2 border border-cga-bcyan/30 bg-cga-bcyan/[0.05] px-2 py-1.5 text-[11px] text-cga-bcyan md:hidden">
+              <button
+                type="button"
+                aria-label="Previous channel"
+                onClick={() => stepChannel(-1)}
+                className="px-2 text-cga-cyan hover:text-cga-bcyan"
+              >
+                {"<"}
+              </button>
+              <span className="flex-1 truncate text-center tracking-[0.16em]">
+                {channelLabel} {CH_STATUS[channel]}
+              </span>
+              <button
+                type="button"
+                aria-label="Next channel"
+                onClick={() => stepChannel(1)}
+                className="px-2 text-cga-cyan hover:text-cga-bcyan"
+              >
+                {">"}
+              </button>
+            </div>
+
             {/* CONTROL DECK */}
             <div
-              className="deck mono-command mt-3 flex flex-col gap-2 border border-cga-bcyan/30 bg-cga-bcyan/[0.03] p-3 text-[10px]"
+              className="deck mono-command mt-3 hidden md:flex md:flex-col gap-2 border border-cga-bcyan/30 bg-cga-bcyan/[0.03] p-3 text-[10px]"
               onMouseLeave={() => setHoveredIndex(null)}
             >
               {/* brand plate + channel tuner */}
