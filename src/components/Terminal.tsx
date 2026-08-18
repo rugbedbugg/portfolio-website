@@ -470,8 +470,9 @@ const Terminal = () => {
                 autoComplete="off"
                 autoCapitalize="off"
                 autoCorrect="off"
-                /* 16px avoids iOS Safari's zoom-on-focus for small inputs */
-                className="min-w-0 flex-1 bg-transparent text-[16px] text-cga-bgreen caret-cga-bgreen outline-none"
+                /* Match the 11px output; 16px on phones avoids iOS Safari's
+                   zoom-on-focus, which only triggers below the md breakpoint. */
+                className="min-w-0 flex-1 bg-transparent text-[16px] text-cga-bgreen caret-cga-bgreen outline-none md:text-[11px]"
                 aria-label="Terminal input"
               />
             </form>
