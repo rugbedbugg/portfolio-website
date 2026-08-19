@@ -20,6 +20,7 @@ const hasResume = Boolean(PROFILE.resumeUrl && PROFILE.resumeUrl !== "#");
 
 const NAV_LINKS = [
   { label: "Projects", href: "#projects" },
+  { label: "Dispatches", href: "#dispatches" },
   { label: "About", href: "#about" },
   { label: "Contact", href: "#contact" },
 ];
@@ -68,6 +69,54 @@ const PROJECTS = [
     tags: ["x86_64 Assembly", "Linux", "Networking", "HTTP"],
   },
 ];
+
+// Curated LinkedIn posts. Hand-maintained, same as PROJECTS/SOCIALS: LinkedIn has no
+// build-time API and its embed clashes with the CRT look, so entries link out to the
+// real post. Fill title/excerpt/href with your own; 3+ keeps the section worthwhile.
+const DISPATCHES: {
+  title: string;
+  excerpt: string;
+  date: string; // YYYY-MM
+  href: string;
+  topic: string;
+  image: string; // /dispatches/<name>.png; falls back to a NO SIGNAL tile if missing
+}[] = [
+  {
+    title: "First IEEE paper: a Chess960 generator on FPGA",
+    excerpt:
+      "Published at IEEE SISIMPACT 2025. We treated Chess960's 960 deterministic openings as an entropy source and built a resource-efficient FPGA position generator for covert communication systems.",
+    date: "2026-03",
+    href: "https://www.linkedin.com/posts/partha-gogoi-736241308_ieee-research-fpga-activity-7443209240984334336-YYMS",
+    topic: "RESEARCH",
+    image: "/dispatches/ieee.png",
+  },
+  {
+    title: '"Assembly is faster than C" is mostly a myth',
+    excerpt:
+      "Same array-sum in hand-written asm versus compiler-built C++, same x86_64 machine, averaged over 1000 runs. The hand-written version ran ~1.42x slower. Speed is about how well instructions fit the hardware, not the language.",
+    date: "2026-01",
+    href: "https://www.linkedin.com/posts/partha-gogoi-736241308_assembly-language-is-faster-than-cc-activity-7417678944587669504-YXoA",
+    topic: "LOW-LEVEL",
+    image: "/dispatches/assembly.png",
+  },
+  {
+    title: "A summer of Rust, shaders, and phone-only AI agents",
+    excerpt:
+      "Learned Rust past the hype, rendered a neon endless GLSL pattern, and built an AI agent entirely in Termux with the model running locally on my phone. No IDE, no autocomplete, pure terminal.",
+    date: "2025-07",
+    href: "https://www.linkedin.com/posts/partha-gogoi-736241308_rustlang-glsl-shaders-activity-7347825447226740736-LCln",
+    topic: "BUILD LOG",
+    image: "/dispatches/rust.png",
+  },
+];
+
+// "2026-07" -> "JUL 2026" for the dispatch header row. Falls back to the raw string.
+const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+const fmtDispatchDate = (ym: string) => {
+  const [y, m] = ym.split("-");
+  const month = MONTHS[Number(m) - 1];
+  return month && y ? `${month} ${y}` : ym;
+};
 
 const fade = (delay: number) => ({
   initial: { opacity: 0, y: 10, filter: "blur(3px)" },
@@ -216,6 +265,72 @@ const Index = () => {
                   </div>
                 </ExtLink>
               ))}
+            </div>
+          </DossierPanel>
+        </motion.section>
+
+        <motion.section {...fade(0.72)} id="dispatches">
+          <DossierPanel label="FIELD DISPATCHES" code="REF://LINKEDIN.LOG" bodyClassName="p-0">
+            {/* Desktop caps the feed at ~1.5 cards and scrolls internally, so the
+                clipped card + bottom fade signal there's more. Mobile stacks fully. */}
+            <div className="relative">
+              <div className="no-scrollbar grid gap-3 p-4 sm:p-5 md:max-h-[268px] md:overflow-y-auto">
+                {DISPATCHES.map((post) => (
+                  <ExtLink
+                    key={post.href}
+                    href={post.href}
+                    label={post.title}
+                    className="group relative flex gap-3 overflow-hidden border border-cga-bcyan/25 bg-cga-bcyan/[0.03] p-3 transition-colors hover:border-cga-bcyan/60 hover:bg-cga-bcyan/[0.06]"
+                  >
+                    {/* post image, treated as surveillance footage; until supplied it
+                        falls back to the same dead-channel static as CH 02 on the cassette */}
+                    <div className="relative h-[92px] w-[92px] shrink-0 self-start overflow-hidden border border-cga-bcyan/30 bg-cga-black">
+                      <span className="vhs-static pointer-events-none absolute inset-[-50%] z-0 h-[200%] w-[200%] opacity-70" />
+                      <span className="pointer-events-none absolute inset-0 z-[1] flex items-center justify-center text-center text-[9px] leading-tight tracking-[0.12em] text-cga-white/80 [text-shadow:0_0_3px_#000]">
+                        NO
+                        <br />
+                        SIGNAL
+                      </span>
+                      <img
+                        src={post.image}
+                        alt=""
+                        loading="lazy"
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                        }}
+                        className="relative z-[2] h-full w-full object-cover opacity-90 [filter:grayscale(0.25)_contrast(1.05)]"
+                      />
+                      <span className="pointer-events-none absolute inset-0 z-[3] bg-cga-bcyan/20 mix-blend-overlay" />
+                      <span className="pointer-events-none absolute inset-0 z-[3] bg-[repeating-linear-gradient(to_bottom,rgba(0,0,0,0.28)_0px,rgba(0,0,0,0.28)_1px,transparent_1px,transparent_3px)]" />
+                    </div>
+
+                    <div className="relative z-10 flex min-w-0 flex-1 flex-col gap-1.5">
+                      <div className="flex items-center justify-between gap-2 text-[10px] tracking-[0.14em] text-cga-cyan">
+                        <span className="flex items-center gap-1.5">
+                          <span className="inline-block h-1.5 w-1.5 bg-cga-bred animate-blink" />
+                          FEED: LINKEDIN
+                        </span>
+                        <span>{fmtDispatchDate(post.date)}</span>
+                      </div>
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="mono-command font-semibold text-cga-bcyan">{post.title}</p>
+                        <span className="mono-command shrink-0 text-[10px] tracking-[0.16em] text-cga-cyan opacity-0 transition-opacity group-hover:opacity-100">
+                          ▸ READ
+                        </span>
+                      </div>
+                      <p className="line-clamp-2 text-sm text-cga-gray">{post.excerpt}</p>
+                      <div className="mt-auto flex flex-wrap gap-2 pt-1">
+                        <span className="border border-cga-bcyan/40 bg-cga-bcyan/10 px-2 py-0.5 text-[11px] text-cga-bcyan">
+                          {post.topic}
+                        </span>
+                      </div>
+                    </div>
+                  </ExtLink>
+                ))}
+              </div>
+
+              {/* scroll affordance: the clipped card plus this fade signal more below (desktop only) */}
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 hidden h-14 bg-gradient-to-t from-cga-black to-transparent md:block" />
             </div>
           </DossierPanel>
         </motion.section>
