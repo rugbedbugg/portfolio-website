@@ -75,15 +75,6 @@ All colors MUST be HSL.
         text-shadow: 0 0 1.5px hsl(180 100% 72% / 0.22);
     }
 
-    /* Desktop renders at 75% scale so the whole cassette clears the viewport,
-       matching a 75% browser-zoom view. Phones stay at 100% for the single
-       column. Visitors can still zoom further with their own browser controls. */
-    @media (min-width: 768px) {
-        :root {
-            zoom: 0.75;
-        }
-    }
-
     /* Keyboard focus indicator (phosphor cyan) — mouse clicks stay ring-free */
     :focus-visible {
         outline: 2px solid hsl(var(--ring));

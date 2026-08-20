@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import AsciiArt from "@/components/AsciiArt";
 import GlobalTrace from "@/components/GlobalTrace";
 import TypewriterText from "@/components/TypewriterText";
 import DossierPanel from "@/components/DossierPanel";
 import { ExtLink } from "@/components/Transmission";
+import { useSubjectLayout } from "@/hooks/use-subject-layout";
 import { recordVisit, relTime } from "@/lib/trace";
 
 const PROFILE = {
@@ -126,6 +127,11 @@ const fade = (delay: number) => ({
 
 const Index = () => {
   const [trace] = useState(() => recordVisit());
+  // Landing layout: side-by-side when the subject panel fits the viewport,
+  // stacked otherwise. In two-pane mode the panel is zoom-scaled to fit.
+  const subjectRef = useRef<HTMLDivElement>(null);
+  const { mode, scale, rightScale, rightInset } = useSubjectLayout(subjectRef);
+  const twoPane = mode === "two";
   const typedName = PROFILE.name.toUpperCase();
   const TYPE_SPEED_MS = 100; // ~100 WPM approximation for name
   const nameSpeed = TYPE_SPEED_MS;
@@ -133,48 +139,81 @@ const Index = () => {
   const nameDelay = 120;
   const taglineDelay = nameDelay + typedName.length * nameSpeed + 260;
 
-  // Desktop is scaled to 0.75 via CSS zoom (index.css). CSS zoom doesn't enlarge
-  // the viewport the way browser zoom does, so the fixed-height panels use
-  // 100/0.75 = 133.333vh: after the 0.75 scale they render at 100vh but keep the
-  // content room the zoom would otherwise cost.
   return (
-    <div className="relative z-10 min-h-screen overflow-hidden mono-ui md:flex md:h-[133.333vh]">
-      {/* LEFT: subject identity panel. Fixed-height column from md up; scrolls internally if the cassette overflows a short viewport. */}
-      <aside className="no-scrollbar flex flex-col justify-center px-6 py-6 sm:py-8 md:h-[133.333vh] md:w-[44%] md:shrink-0 md:justify-start md:overflow-y-auto">
-        <div className="mx-auto w-full max-w-[560px] space-y-5">
-          <div className="terminal-title text-center">
-            [ SYSTEM :: OXIDE TERMINAL PORTFOLIO :: 198X MODE ]
-          </div>
+    <div
+      data-mode={mode}
+      className={
+        twoPane
+          ? "relative z-10 flex h-screen gap-8 overflow-hidden px-8 mono-ui"
+          : "relative z-10 min-h-screen overflow-hidden mono-ui"
+      }
+    >
+      {/* LEFT: subject identity panel. Two-pane mode is a fixed-height,
+          non-scrolling column whose block is zoom-scaled to fit the viewport;
+          otherwise it stacks above the dossier and the page scrolls. */}
+      <aside
+        className={
+          twoPane
+            ? "flex h-screen w-[44%] shrink-0 flex-col justify-center overflow-hidden py-8"
+            : "flex flex-col px-6 py-6 sm:py-8"
+        }
+      >
+        {/* zoom scales the whole block uniformly, so elements keep their aspect
+            ratio while filling the pane; the inner ref is measured at natural
+            size to derive that zoom. */}
+        <div style={twoPane ? { zoom: scale } : undefined}>
+          <div
+            ref={subjectRef}
+            className="mx-auto w-full max-w-[560px] space-y-5"
+          >
+            <div className="terminal-title text-center">
+              [ SYSTEM :: OXIDE TERMINAL PORTFOLIO :: 198X MODE ]
+            </div>
 
-          <motion.header {...fade(0.2)} className="text-center space-y-2">
-            <h1 className="mono-command text-2xl sm:text-3xl font-bold text-foreground text-glow tracking-widest">
-              <span className="opacity-90">{"> "}</span>
-              <TypewriterText
-                text={typedName}
-                speed={nameSpeed}
-                delay={nameDelay}
-              />
-            </h1>
-            <p className="text-muted-foreground text-xs">[{PROFILE.aliases}]</p>
-            <p className="mono-command text-foreground text-sm uppercase tracking-wide">
-              <TypewriterText
-                text={PROFILE.tagline}
-                speed={taglineSpeed}
-                delay={taglineDelay}
-                persistentCursor
-              />
-            </p>
-          </motion.header>
+            <motion.header {...fade(0.2)} className="text-center space-y-2">
+              <h1 className="mono-command text-2xl sm:text-3xl font-bold text-foreground text-glow tracking-widest">
+                <span className="opacity-90">{"> "}</span>
+                <TypewriterText
+                  text={typedName}
+                  speed={nameSpeed}
+                  delay={nameDelay}
+                />
+              </h1>
+              <p className="text-muted-foreground text-xs">[{PROFILE.aliases}]</p>
+              <p className="mono-command text-foreground text-sm uppercase tracking-wide">
+                <TypewriterText
+                  text={PROFILE.tagline}
+                  speed={taglineSpeed}
+                  delay={taglineDelay}
+                  persistentCursor
+                />
+              </p>
+            </motion.header>
 
-          <div className="flex justify-center">
-            <AsciiArt />
+            <div className="flex justify-center">
+              <AsciiArt />
+            </div>
           </div>
         </div>
       </aside>
 
-      {/* RIGHT — dossier content: scrolls independently on md+ */}
-      <main className="no-scrollbar px-6 py-6 sm:py-8 md:h-[133.333vh] md:flex-1 md:overflow-y-auto">
-        <div className="mx-auto w-full max-w-2xl space-y-6">
+      {/* RIGHT — dossier content: scrolls independently in two-pane mode. */}
+      <main
+        className={
+          twoPane
+            ? "no-scrollbar h-screen flex-1 overflow-y-auto py-8"
+            : "px-6 py-6 sm:py-8"
+        }
+        style={twoPane ? { paddingRight: rightInset } : undefined}
+      >
+        <div
+          className={
+            twoPane
+              ? "mr-auto w-full max-w-2xl space-y-6"
+              : "mx-auto w-full max-w-2xl space-y-6"
+          }
+          style={twoPane ? { zoom: rightScale } : undefined}
+        >
         <motion.nav
           {...fade(0.35)}
           className="mono-command text-center text-sm border-y border-primary/25 py-2"
