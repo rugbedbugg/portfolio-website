@@ -2,6 +2,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useState,
   type ReactNode,
 } from "react";
@@ -42,6 +43,17 @@ export const TransmissionProvider = ({ children }: { children: ReactNode }) => {
     },
     [reduced],
   );
+
+  // Since connect() navigates this tab, hitting Back restores the page from the
+  // bfcache with the interstitial still up. Clear it when the page is shown
+  // again so returning visitors don't land on a frozen "ESTABLISHING UPLINK".
+  useEffect(() => {
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) setTarget(null);
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
 
   return (
     <TransmissionContext.Provider value={connect}>
