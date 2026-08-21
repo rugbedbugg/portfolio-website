@@ -146,7 +146,7 @@ const Index = () => {
   // Landing layout: side-by-side when the subject panel fits the viewport,
   // stacked otherwise. In two-pane mode the panel is zoom-scaled to fit.
   const subjectRef = useRef<HTMLDivElement>(null);
-  const { mode, scale, rightScale, rightInset } = useSubjectLayout(subjectRef);
+  const { mode, scale, rightScale } = useSubjectLayout(subjectRef);
   const twoPane = mode === "two";
   const typedName = PROFILE.name.toUpperCase();
   const TYPE_SPEED_MS = 100; // ~100 WPM approximation for name
@@ -220,28 +220,21 @@ const Index = () => {
             ? "no-scrollbar h-screen flex-1 overflow-y-auto py-8"
             : "px-6 py-6 sm:py-8"
         }
-        style={twoPane ? { paddingRight: rightInset } : undefined}
       >
         <div
-          className={
-            twoPane
-              ? "mr-auto w-full max-w-2xl space-y-6"
-              : "mx-auto w-full max-w-2xl space-y-6"
-          }
+          className="mx-auto w-full max-w-2xl space-y-6"
           style={twoPane ? { zoom: rightScale } : undefined}
         >
         <motion.nav
           {...fade(0.35)}
-          className="mono-command text-center text-sm border-y border-primary/25 py-2"
+          className="mono-command flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center text-sm border-y border-primary/25 py-2"
         >
           {NAV_LINKS.map((link, i) => (
             <span key={link.label}>
               <a href={link.href} className="link-hover text-foreground">
                 {link.label}
               </a>
-              {i < NAV_LINKS.length - 1 && (
-                <span className="text-muted-foreground mx-2">//</span>
-              )}
+              {i < NAV_LINKS.length - 1 && <span className="text-muted-foreground ml-2">//</span>}
             </span>
           ))}
         </motion.nav>
@@ -286,7 +279,6 @@ const Index = () => {
                   label={project.title}
                   className="group relative flex flex-col gap-2 overflow-hidden border border-cga-bcyan/25 bg-cga-bcyan/[0.03] p-4 transition-colors hover:border-cga-bcyan/60 hover:bg-cga-bcyan/[0.06]"
                 >
-                  {/* VHS tracking sweep on hover — echoes the cassette feed */}
                   <span className="pointer-events-none absolute inset-0 -translate-y-full opacity-0 transition-all duration-500 group-hover:translate-y-full group-hover:opacity-100">
                     <span className="absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-cga-bcyan/15 to-transparent" />
                     <span className="absolute inset-0 bg-[repeating-linear-gradient(to_bottom,rgba(85,255,255,0.05)_0px,rgba(85,255,255,0.05)_1px,transparent_1px,transparent_3px)]" />
