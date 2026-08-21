@@ -4,8 +4,7 @@ import { detectViewer, type Viewer } from "@/lib/viewer";
 import { recordVisit, relTime } from "@/lib/trace";
 import { useRelay } from "@/lib/useRelay";
 
-// Portrait sources: real photo (RAW) by default, CGA-dithered via the DITHER toggle.
-const AVATAR_CGA = "/avatar-cga.png";
+// Portrait source: the real photo, rendered through the CRT feed filter.
 const AVATAR_RAW = "/avatar.jpg";
 const AVATAR_FALLBACK = "/avatar.svg";
 
@@ -15,6 +14,7 @@ const TRACKS = [
   "/assets/insonamia-slowed.mp3",
 ];
 
+// Track titles, parallel to TRACKS, shown in the "Now Playing" line.
 const TRACK_META = [
   "MEMORY REBOOT — VØJ (SLOWED)",
   "VISION — UDIENNX (SLOWED)",
@@ -39,8 +39,6 @@ const MONTHS = [
 ];
 const fmtDate = (d: Date) =>
   `${WEEKDAYS[d.getDay()]} ${String(d.getDate()).padStart(2, "0")} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
-// VHS/NTSC interlaced resolution tag for the live header
-const LIVE_TAG = "[LIVE] · 1080p";
 // base id for the "current viewer" - rendered with live-varying Zalgo corruption
 const VIEWER_BASE = "YOU";
 const VOL_SEGMENTS = 12;
@@ -138,29 +136,16 @@ const AsciiArt = () => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const currentTrackRef = useRef(0);
 
-  // Web Audio graph (built lazily on first play) for the real spectrum meter
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const freqRef = useRef<Uint8Array | null>(null);
-  const graphReadyRef = useRef(false);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
   const [playing, setPlaying] = useState(false);
   const [slow, setSlow] = useState(false);
   const [turbo, setTurbo] = useState(false);
-  const [invert, setInvert] = useState(false);
-  const [dither, setDither] = useState(false);
-  const [mono, setMono] = useState(false);
-  const [gain, setGain] = useState(false);
 
   const [channel, setChannel] = useState(CH_SUBJECT);
   const [volume, setVolume] = useState(0.3);
   const [jamming, setJamming] = useState(false);
-
-  const [statusText, setStatusText] = useState("● REC · STANDBY");
   const [trackMeta, setTrackMeta] = useState(TRACK_META[0]);
+
   const [clock, setClock] = useState(() => fmtClock(new Date()));
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const relay = useRelay();
   const [log, setLog] = useState<string[]>([
     "cam-01@oxide:~$ boot feed",
@@ -219,84 +204,8 @@ const AsciiArt = () => {
     };
   }, []);
 
-  // Spectrum meter: real audio bars when playing, idle shimmer otherwise.
-  useEffect(() => {
-    const cv = canvasRef.current;
-    const ctx2d = cv?.getContext("2d");
-    if (!cv || !ctx2d) return;
-    const W = cv.width;
-    const H = cv.height;
-    const BARS = 22;
-    const bw = W / BARS;
-
-    const paint = (heights: number[]) => {
-      ctx2d.clearRect(0, 0, W, H);
-      ctx2d.fillStyle = "#55FFFF";
-      for (let i = 0; i < BARS; i++) {
-        const bh = Math.max(1, heights[i] * H);
-        ctx2d.fillRect(i * bw + 0.5, H - bh, bw - 1, bh);
-      }
-    };
-
-    if (prefersReducedMotion) {
-      paint(new Array(BARS).fill(0.06));
-      return;
-    }
-
-    let raf = 0;
-    let ph = 0;
-    const render = () => {
-      const analyser = analyserRef.current;
-      const freq = freqRef.current;
-      const heights: number[] = [];
-      if (playing && analyser && freq) {
-        analyser.getByteFrequencyData(freq);
-        for (let i = 0; i < BARS; i++) {
-          heights[i] = Math.min(1, (freq[i] / 255) * 1.15);
-        }
-      } else {
-        for (let i = 0; i < BARS; i++) {
-          heights[i] =
-            0.05 +
-            (Math.sin(ph + i * 0.55) * 0.5 + 0.5) * 0.08 +
-            Math.random() * 0.03;
-        }
-      }
-      paint(heights);
-      ph += 0.09;
-      raf = requestAnimationFrame(render);
-    };
-    raf = requestAnimationFrame(render);
-    return () => cancelAnimationFrame(raf);
-  }, [playing, prefersReducedMotion]);
-
   const pushLog = (line: string) =>
     setLog((prev) => [...prev, line].slice(-8));
-
-  const ensureAudioGraph = () => {
-    if (graphReadyRef.current) return;
-    const audio = audioRef.current;
-    if (!audio) return;
-    try {
-      const Ctx =
-        window.AudioContext ||
-        (window as unknown as { webkitAudioContext: typeof AudioContext })
-          .webkitAudioContext;
-      const ctx = new Ctx();
-      const source = ctx.createMediaElementSource(audio);
-      const analyser = ctx.createAnalyser();
-      analyser.fftSize = 64;
-      analyser.smoothingTimeConstant = 0.75;
-      source.connect(analyser);
-      analyser.connect(ctx.destination);
-      audioCtxRef.current = ctx;
-      analyserRef.current = analyser;
-      freqRef.current = new Uint8Array(analyser.frequencyBinCount);
-      graphReadyRef.current = true;
-    } catch {
-      // Web Audio unavailable: meter falls back to idle shimmer.
-    }
-  };
 
   const playTrackByIndex = async (idx: number) => {
     const audio = audioRef.current;
@@ -320,20 +229,16 @@ const AsciiArt = () => {
   const handlePlay = async () => {
     const audio = audioRef.current;
     if (!audio) return;
-    ensureAudioGraph();
-    audioCtxRef.current?.resume?.();
     if (playing) {
       audio.pause();
       setPlaying(false);
       pushLog("$ deck pause");
-      setStatusText("● REC · PAUSED");
       return;
     }
     await playTrackByIndex(currentTrackRef.current);
     applyRate();
     setPlaying(true);
     pushLog("$ deck play");
-    setStatusText("● REC · PLAYBACK");
   };
 
   const handleSpeed = (mode: "slow" | "turbo") => {
@@ -346,16 +251,13 @@ const AsciiArt = () => {
     audio.playbackRate = nextSlow ? 0.82 : nextTurbo ? 1.18 : 1;
     if (mode === "slow") {
       pushLog(nextSlow ? "$ deck rate 0.82" : "$ deck rate 1.00");
-      setStatusText(nextSlow ? "SLO-MO ENGAGED" : "RATE NORMAL");
     } else {
       pushLog(nextTurbo ? "$ deck rate 1.18" : "$ deck rate 1.00");
-      setStatusText(nextTurbo ? "FAST FORWARD" : "RATE NORMAL");
     }
   };
 
   const handleJam = async () => {
     pushLog("$ uplink --drop // SIGNAL LOST");
-    setStatusText("◇ SIGNAL LOST ◇");
     setJamming(true);
     window.setTimeout(() => setJamming(false), 1500);
     const nextIdx = Math.floor(Math.random() * TRACKS.length);
@@ -371,40 +273,7 @@ const AsciiArt = () => {
     setChannel((c) => {
       const next = ((c - 1 + dir + CH_COUNT) % CH_COUNT) + 1;
       pushLog(`$ tuner set --ch ${String(next).padStart(2, "0")}`);
-      setStatusText(CH_STATUS[next]);
       return next;
-    });
-  };
-
-  const toggleInvert = () => {
-    setInvert((v) => {
-      pushLog(v ? "$ video invert --off" : "$ video invert --on");
-      setStatusText(v ? "VIDEO NORMAL" : "VIDEO INVERTED");
-      return !v;
-    });
-  };
-
-  const toggleDither = () => {
-    setDither((d) => {
-      pushLog(d ? "$ decode raw" : "$ decode cga --dither");
-      setStatusText(d ? "RAW FEED" : "CGA DECODE");
-      return !d;
-    });
-  };
-
-  const toggleMono = () => {
-    setMono((m) => {
-      pushLog(m ? "$ chroma --on" : "$ chroma --off");
-      setStatusText(m ? "COLOR FEED" : "MONO FEED");
-      return !m;
-    });
-  };
-
-  const toggleGain = () => {
-    setGain((g) => {
-      pushLog(g ? "$ gain --normal" : "$ gain --boost");
-      setStatusText(g ? "GAIN NORMAL" : "GAIN BOOST");
-      return !g;
     });
   };
 
@@ -418,28 +287,10 @@ const AsciiArt = () => {
   const nudgeVol = (delta: number) =>
     setVol(Math.round((volume + delta) * VOL_SEGMENTS) / VOL_SEGMENTS);
 
-  const rawFilter = useMemo(
+  const feedFilter = useMemo(
     () => "contrast(1.16) brightness(0.94) saturate(0.9) blur(0.5px)",
     [],
   );
-
-  const feedFilter =
-    [
-      dither ? "" : rawFilter,
-      invert ? "invert(1)" : "",
-      mono ? "grayscale(1)" : "",
-      gain ? "brightness(1.35) contrast(1.1)" : "",
-    ]
-      .filter(Boolean)
-      .join(" ") || undefined;
-
-  const toggles: Array<{ label: string; active: boolean; onToggle: () => void }> =
-    [
-      { label: "INVERT", active: invert, onToggle: toggleInvert },
-      { label: "DITHER", active: dither, onToggle: toggleDither },
-      { label: "MONO", active: mono, onToggle: toggleMono },
-      { label: "GAIN", active: gain, onToggle: toggleGain },
-    ];
 
   const transport: Array<{
     icon: string;
@@ -498,20 +349,13 @@ const AsciiArt = () => {
         }}
       />
 
-      <div className="relative border-2 border-cga-bcyan/40 bg-cga-black p-4 sm:p-5">
-        {/* header: REC · tape · timestamp */}
-        <div className="relative z-20 mx-auto mb-3 h-8 w-[96%] border border-cga-bcyan/30 bg-cga-bcyan/[0.06] px-3 overflow-hidden">
-          <div className="mono-command grid h-full grid-cols-[auto_1fr_auto] items-center gap-2 text-[9px] sm:text-[10px] tracking-[0.12em] sm:tracking-[0.18em]">
-            <span className="flex items-center gap-1.5 text-left text-cga-bred">
-              <span className="inline-block h-2 w-2 bg-cga-bred animate-blink" />
-              {LIVE_TAG}
-            </span>
-            <span className="hidden truncate text-center text-cga-gray md:block">{trackMeta}</span>
-            <span className="text-right tabular-nums text-cga-bcyan">{clock}</span>
-          </div>
-        </div>
-
+      <div className="relative">
         <div className="relative border border-cga-bcyan/35 bg-cga-black p-3 sm:p-4">
+          {/* now playing: plain string, no frame */}
+          <div className="mono-command mb-2 truncate text-center text-[11px] tracking-[0.14em] text-cga-cyan">
+            Now Playing <span className="text-cga-gray">//</span>{" "}
+            <span className="text-cga-bcyan">{trackMeta}</span>
+          </div>
           {/* CRT SCREEN */}
           <div className="relative h-[228px] overflow-hidden rounded-[6px] border border-cga-bcyan/20 bg-cga-black p-2.5 sm:h-[260px]">
               <div
@@ -526,13 +370,13 @@ const AsciiArt = () => {
                 {/* CH 03 — live subject */}
                 {subjectLive && (
                   <img
-                    src={dither ? AVATAR_CGA : AVATAR_RAW}
+                    src={AVATAR_RAW}
                     alt="Partha Pratim Gogoi profile"
                     className="h-full w-full object-contain"
                     style={{
                       objectPosition: "50% 50%",
                       filter: feedFilter,
-                      imageRendering: dither ? "pixelated" : "auto",
+                      imageRendering: "auto",
                     }}
                     onError={(e) => {
                       const img = e.currentTarget;
@@ -707,10 +551,7 @@ const AsciiArt = () => {
             </div>
 
             {/* CONTROL DECK */}
-            <div
-              className="deck mono-command mt-3 hidden md:flex md:flex-col gap-2 border border-cga-bcyan/30 bg-cga-bcyan/[0.03] p-3 text-[10px]"
-              onMouseLeave={() => setHoveredIndex(null)}
-            >
+            <div className="deck mono-command mt-3 hidden md:flex md:flex-col gap-2.5 border border-cga-bcyan/30 bg-cga-bcyan/[0.03] p-3 text-xs">
               {/* brand plate + channel tuner */}
               <div className="deck-head tracking-[0.14em] text-cga-cyan">
                 <span className="shrink-0 whitespace-nowrap text-cga-bcyan">
@@ -739,42 +580,10 @@ const AsciiArt = () => {
                 </div>
               </div>
 
-              {/* effect toggles: 4-across, reflow to 2x2 when the deck is narrow */}
-              <div className="deck-btn-grid">
-                {toggles.map((opt, idx) => {
-                  const marked = hoveredIndex === idx;
-                  return (
-                    <button
-                      key={opt.label}
-                      type="button"
-                      onMouseEnter={() => setHoveredIndex(idx)}
-                      onClick={opt.onToggle}
-                      className={`flex items-center justify-center gap-1.5 border-2 px-2.5 py-2.5 tracking-[0.1em] transition-colors ${
-                        opt.active
-                          ? "border-cga-white bg-cga-bcyan text-cga-black"
-                          : "border-cga-bcyan/30 bg-cga-bcyan/[0.05] text-cga-cyan hover:bg-cga-bcyan/10"
-                      }`}
-                    >
-                      <span
-                        className={`inline-block h-2 w-2 rounded-full ${
-                          opt.active
-                            ? "bg-cga-black"
-                            : marked
-                              ? "bg-cga-bcyan"
-                              : "bg-cga-cyan/40"
-                        }`}
-                      />
-                      {opt.label}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* meters: volume over signal, full width */}
-              <div className="flex flex-col gap-2">
-                {/* volume */}
-                <div className="flex w-full flex-col justify-center border border-cga-bcyan/25 bg-cga-bcyan/[0.05] px-2 py-1.5">
-                  <div className="mb-1 flex items-center justify-between text-[9px] text-cga-cyan">
+              {/* volume */}
+              <div className="flex flex-col gap-2.5">
+                <div className="flex w-full flex-col justify-center border border-cga-bcyan/25 bg-cga-bcyan/[0.05] px-2 py-2">
+                  <div className="mb-1.5 flex items-center justify-between text-[11px] tracking-[0.14em] text-cga-cyan">
                     <span>VOL</span>
                     <span className="text-cga-bcyan">{Math.round(volume * 100)}%</span>
                   </div>
@@ -793,31 +602,29 @@ const AsciiArt = () => {
                     }}
                     className="flex gap-[2px]"
                   >
-                    {Array.from({ length: VOL_SEGMENTS }, (_, i) => (
-                      <button
-                        key={i}
-                        type="button"
-                        aria-label={`Volume ${Math.round(((i + 1) / VOL_SEGMENTS) * 100)}%`}
-                        onClick={() => setVol((i + 1) / VOL_SEGMENTS)}
-                        className={`h-3 flex-1 border ${
-                          i < filledSegments
-                            ? "border-cga-bcyan bg-cga-bcyan"
-                            : "border-cga-bcyan/20 bg-cga-bcyan/[0.06]"
-                        }`}
-                      />
-                    ))}
+                    {Array.from({ length: VOL_SEGMENTS }, (_, i) => {
+                      const filled = i < filledSegments;
+                      // top two segments read as a red "hot" zone
+                      const hot = i >= VOL_SEGMENTS - 2;
+                      return (
+                        <button
+                          key={i}
+                          type="button"
+                          aria-label={`Volume ${Math.round(((i + 1) / VOL_SEGMENTS) * 100)}%`}
+                          onClick={() => setVol((i + 1) / VOL_SEGMENTS)}
+                          className={`h-5 flex-1 border ${
+                            filled
+                              ? hot
+                                ? "border-cga-bred bg-cga-bred"
+                                : "border-cga-bcyan bg-cga-bcyan"
+                              : hot
+                                ? "border-cga-bred/25 bg-cga-bred/[0.06]"
+                                : "border-cga-bcyan/20 bg-cga-bcyan/[0.06]"
+                          }`}
+                        />
+                      );
+                    })}
                   </div>
-                </div>
-
-                {/* signal */}
-                <div className="flex w-full flex-col justify-center overflow-hidden border border-cga-bcyan/25 bg-cga-bcyan/[0.05] px-2 py-1.5">
-                  <div className="mb-0.5 text-[9px] text-cga-cyan">SIGNAL</div>
-                  <canvas
-                    ref={canvasRef}
-                    width={160}
-                    height={26}
-                    className="h-[22px] w-full"
-                  />
                 </div>
               </div>
 
@@ -840,21 +647,6 @@ const AsciiArt = () => {
                 ))}
               </div>
 
-              {/* status readout + speaker grille */}
-              <div className="flex items-center justify-between gap-3">
-                <span className="flex items-center gap-1.5 tracking-[0.14em] text-cga-bred">
-                  <span className="inline-block h-2 w-2 bg-cga-bred animate-blink" />
-                  REC
-                </span>
-                <span className="flex-1 text-center tracking-[0.16em] text-cga-bcyan">
-                  {statusText}
-                </span>
-                <span
-                  aria-hidden="true"
-                  className="h-3.5 w-16 bg-[repeating-linear-gradient(to_right,rgba(85,255,255,0.35)_0px,rgba(85,255,255,0.35)_2px,transparent_2px,transparent_5px)]"
-                />
-              </div>
-
               {/* system log (mobile) */}
               <div className="h-[76px] overflow-hidden border border-cga-bcyan/20 bg-cga-black p-2 text-[9px] leading-relaxed text-cga-bgreen md:hidden">
                 {log.map((line, idx) => (
@@ -864,32 +656,31 @@ const AsciiArt = () => {
                 ))}
               </div>
             </div>
-        </div>
 
-        {/* footer */}
-        <div className="mono-command relative z-20 mt-4 flex flex-col items-center gap-1.5 text-[10px] tracking-[0.18em] text-cga-cyan sm:grid sm:grid-cols-3 sm:items-center sm:gap-2">
-          <span className="text-center sm:text-left">SIGNAL RELAY</span>
-          <button
-            type="button"
-            onClick={() => window.dispatchEvent(new Event("oxide:terminal"))}
-            aria-label="Open terminal"
-            className="mx-auto border border-cga-bgreen/50 bg-cga-black/80 px-2.5 py-1 text-[10px] tracking-[0.16em] text-cga-bgreen transition-colors hover:border-cga-bgreen hover:bg-cga-bgreen/10 hover:text-cga-white"
-          >
-            {">_ TERMINAL  [ ` ]"}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setChannel(5);
-              setStatusText(CH_STATUS[5]);
-              pushLog("$ tuner set --ch 05 // trace viewer");
-            }}
-            title="Tune to viewer file"
-            className="flex items-center justify-center gap-1.5 tracking-[0.06em] transition-colors hover:text-cga-bcyan sm:justify-end"
-          >
-            <span className="text-cga-gray">CURRENT VIEWER -</span>
-            <GlitchText text={VIEWER_BASE} className="text-cga-bred" />
-          </button>
+            {/* footer */}
+            <div className="mono-command relative z-20 mt-4 flex flex-col items-center gap-1.5 text-[10px] tracking-[0.18em] text-cga-cyan sm:grid sm:grid-cols-3 sm:items-center sm:gap-2">
+              <span className="text-center sm:text-left">SIGNAL RELAY</span>
+              <button
+                type="button"
+                onClick={() => window.dispatchEvent(new Event("oxide:terminal"))}
+                aria-label="Open terminal"
+                className="mx-auto border border-cga-bgreen/50 bg-cga-black/80 px-2.5 py-1 text-[10px] tracking-[0.16em] text-cga-bgreen transition-colors hover:border-cga-bgreen hover:bg-cga-bgreen/10 hover:text-cga-white"
+              >
+                {">_ TERMINAL  [ ` ]"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setChannel(5);
+                  pushLog("$ tuner set --ch 05 // trace viewer");
+                }}
+                title="Tune to viewer file"
+                className="flex items-center justify-center gap-1.5 tracking-[0.06em] transition-colors hover:text-cga-bcyan sm:justify-end"
+              >
+                <span className="text-cga-gray">CURRENT VIEWER -</span>
+                <GlitchText text={VIEWER_BASE} className="text-cga-bred" />
+              </button>
+            </div>
         </div>
 
         {/* subtle CRT corner curvature */}
