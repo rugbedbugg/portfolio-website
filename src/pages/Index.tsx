@@ -83,15 +83,6 @@ const DISPATCHES: {
   image: string; // /dispatches/<name>.png; falls back to a NO SIGNAL tile if missing
 }[] = [
   {
-    title: "First IEEE paper: a Chess960 generator on FPGA",
-    excerpt:
-      "Published at IEEE SISIMPACT 2025. We treated Chess960's 960 deterministic openings as an entropy source and built a resource-efficient FPGA position generator for covert communication systems.",
-    date: "2026-03",
-    href: "https://www.linkedin.com/posts/partha-gogoi-736241308_ieee-research-fpga-activity-7443209240984334336-YYMS",
-    topic: "RESEARCH",
-    image: "/dispatches/ieee.png",
-  },
-  {
     title: '"Assembly is faster than C" is mostly a myth',
     excerpt:
       "Same array-sum in hand-written asm versus compiler-built C++, same x86_64 machine, averaged over 1000 runs. The hand-written version ran ~1.42x slower. Speed is about how well instructions fit the hardware, not the language.",
@@ -118,6 +109,31 @@ const fmtDispatchDate = (ym: string) => {
   const month = MONTHS[Number(m) - 1];
   return month && y ? `${month} ${y}` : ym;
 };
+
+// Peer-reviewed publications. Hand-maintained; "me" marks the author to
+// highlight in the byline. Add an object per paper.
+const ME = "Partha Pratim Gogoi";
+const PUBLICATIONS: {
+  title: string;
+  authors: string[];
+  venue: string;
+  contribution: string;
+  href: string; // DOI / IEEE Xplore link
+}[] = [
+  {
+    title:
+      "Resource-Efficient FPGA Realization of Chess960 Position Generator for Future Covert Communication Systems",
+    authors: [
+      "Naman Goyal",
+      ME,
+      "Abhishek Narayan Tripathi",
+      "Naushad Manzoor Laskar",
+    ],
+    venue: "IEEE SISIMPACT 2025",
+    contribution: "Conceptualization, Methodology, Software",
+    href: "https://doi.org/10.1109/SISIMPACT67725.2025.11439749",
+  },
+];
 
 const fade = (delay: number) => ({
   initial: { opacity: 0, y: 10, filter: "blur(3px)" },
@@ -164,14 +180,14 @@ const Index = () => {
         <div style={twoPane ? { zoom: scale } : undefined}>
           <div
             ref={subjectRef}
-            className="mx-auto w-full max-w-[560px] space-y-5"
+            className="mx-auto w-full max-w-[560px] space-y-6"
           >
             <div className="terminal-title text-center">
               [ SYSTEM :: OXIDE TERMINAL PORTFOLIO :: 198X MODE ]
             </div>
 
-            <motion.header {...fade(0.2)} className="text-center space-y-2">
-              <h1 className="mono-command text-2xl sm:text-3xl font-bold text-foreground text-glow tracking-widest">
+            <motion.header {...fade(0.2)} className="text-center space-y-3">
+              <h1 className="mono-command text-3xl sm:text-4xl font-bold text-foreground text-glow tracking-widest">
                 <span className="opacity-90">{"> "}</span>
                 <TypewriterText
                   text={typedName}
@@ -179,8 +195,8 @@ const Index = () => {
                   delay={nameDelay}
                 />
               </h1>
-              <p className="text-muted-foreground text-xs">[{PROFILE.aliases}]</p>
-              <p className="mono-command text-foreground text-sm uppercase tracking-wide">
+              <p className="text-muted-foreground text-sm">[{PROFILE.aliases}]</p>
+              <p className="mono-command text-foreground text-base uppercase tracking-wide">
                 <TypewriterText
                   text={PROFILE.tagline}
                   speed={taglineSpeed}
@@ -271,11 +287,8 @@ const Index = () => {
                   className="group relative flex flex-col gap-2 overflow-hidden border border-cga-bcyan/25 bg-cga-bcyan/[0.03] p-4 transition-colors hover:border-cga-bcyan/60 hover:bg-cga-bcyan/[0.06]"
                 >
                   {/* VHS tracking sweep on hover — echoes the cassette feed */}
-                  <span className="pointer-events-none absolute inset-0 z-0 opacity-0 transition-opacity group-hover:opacity-100">
-                    <span
-                      className="absolute left-0 h-[10px] w-full bg-cga-bcyan/20 blur-[1px] mix-blend-overlay"
-                      style={{ animation: "tracking-roll 1.6s linear infinite" }}
-                    />
+                  <span className="pointer-events-none absolute inset-0 -translate-y-full opacity-0 transition-all duration-500 group-hover:translate-y-full group-hover:opacity-100">
+                    <span className="absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-cga-bcyan/15 to-transparent" />
                     <span className="absolute inset-0 bg-[repeating-linear-gradient(to_bottom,rgba(85,255,255,0.05)_0px,rgba(85,255,255,0.05)_1px,transparent_1px,transparent_3px)]" />
                   </span>
                   <div className="relative z-10 flex items-center justify-between gap-2 text-[10px] tracking-[0.14em] text-cga-cyan">
@@ -301,6 +314,67 @@ const Index = () => {
                         {tag}
                       </span>
                     ))}
+                  </div>
+                </ExtLink>
+              ))}
+            </div>
+          </DossierPanel>
+        </motion.section>
+
+        <motion.section {...fade(0.7)} id="research">
+          <DossierPanel label="RESEARCH" code="REF://RESEARCH.LOG">
+            <div className="grid gap-3">
+              {PUBLICATIONS.map((pub) => (
+                <ExtLink
+                  key={pub.href}
+                  href={pub.href}
+                  label={pub.title}
+                  className="group relative flex flex-col gap-2 overflow-hidden border border-cga-bcyan/25 bg-cga-bcyan/[0.03] p-4 transition-colors hover:border-cga-bcyan/60 hover:bg-cga-bcyan/[0.06]"
+                >
+                  {/* VHS tracking sweep on hover — echoes the cassette feed */}
+                  <span className="pointer-events-none absolute inset-0 z-0 opacity-0 transition-opacity group-hover:opacity-100">
+                    <span
+                      className="absolute left-0 h-[10px] w-full bg-cga-bcyan/20 blur-[1px] mix-blend-overlay"
+                      style={{ animation: "tracking-roll 1.6s linear infinite" }}
+                    />
+                    <span className="absolute inset-0 bg-[repeating-linear-gradient(to_bottom,rgba(85,255,255,0.05)_0px,rgba(85,255,255,0.05)_1px,transparent_1px,transparent_3px)]" />
+                  </span>
+
+                  <div className="relative z-10 flex items-center justify-between gap-2 text-[10px] tracking-[0.14em] text-cga-cyan">
+                    <span>PUBLICATION // PEER-REVIEWED</span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="inline-block h-1.5 w-1.5 bg-cga-bgreen" />
+                      STATUS: PUBLISHED
+                    </span>
+                  </div>
+
+                  <p className="relative z-10 mono-command font-semibold text-cga-bcyan">
+                    {pub.title}
+                  </p>
+
+                  <p className="relative z-10 text-sm text-cga-gray">
+                    {pub.authors.map((author, i) => (
+                      <span key={author}>
+                        <span className={author === ME ? "text-cga-bcyan" : undefined}>
+                          {author}
+                        </span>
+                        {i < pub.authors.length - 1 && ", "}
+                      </span>
+                    ))}
+                  </p>
+
+                  <div className="relative z-10 mt-1 flex flex-wrap items-center justify-between gap-2">
+                    <span className="flex flex-wrap items-center gap-2">
+                      <span className="border border-cga-bcyan/40 bg-cga-bcyan/10 px-2 py-0.5 text-[11px] text-cga-bcyan">
+                        {pub.venue}
+                      </span>
+                      <span className="w-full sm:w-auto text-[11px] tracking-[0.08em] text-cga-cyan">
+                        ROLE: {pub.contribution}
+                      </span>
+                    </span>
+                    <span className="mono-command shrink-0 text-[10px] tracking-[0.16em] text-cga-cyan opacity-0 transition-opacity group-hover:opacity-100">
+                      ▸ VIEW ON IEEE XPLORE
+                    </span>
                   </div>
                 </ExtLink>
               ))}
