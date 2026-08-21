@@ -21,6 +21,7 @@ const MAX_FIT = 1.6; // cap fluid growth so the cassette isn't comically large
 const ROOT_PAD = 32;
 const GAP = 32;
 const PANEL_PAD_Y = 32;
+const FIT_GUARD = 2;
 const ASIDE_FRACTION = 0.44; // aside is w-[44%] of the flex content box
 
 // The dossier column keeps a fixed readable measure (max-w-2xl = 42rem) and
@@ -36,13 +37,12 @@ const SUBJECT_MEASURE = 560; // the subject block's fixed max width (max-w-[560p
 // without scrolling while keeping its aspect ratio.
 export function useSubjectLayout(
   contentRef: React.RefObject<HTMLElement>,
-): { mode: LayoutMode; scale: number; rightScale: number; rightInset: number } {
+): { mode: LayoutMode; scale: number; rightScale: number } {
   const [state, setState] = React.useState<{
     mode: LayoutMode;
     scale: number;
     rightScale: number;
-    rightInset: number;
-  }>({ mode: "two", scale: 1, rightScale: 1, rightInset: 0 });
+  }>({ mode: "two", scale: 1, rightScale: 1 });
 
   React.useLayoutEffect(() => {
     const compute = () => {
@@ -55,29 +55,29 @@ export function useSubjectLayout(
       const natH = el?.offsetHeight || 1;
 
       const availW = ASIDE_FRACTION * (winW - 2 * ROOT_PAD - GAP);
-      const availH = winH - 2 * PANEL_PAD_Y;
+      const availH = winH - 2 * PANEL_PAD_Y - FIT_GUARD;
       const ideal = Math.min(availW / natW, availH / natH);
 
       let mode: LayoutMode;
       let scale = 1;
       let rightScale = 1;
-      let rightInset = 0;
       if (winW < MOBILE_MAX) {
         mode = "mobile";
       } else if (winW >= TWO_MIN_WIDTH && ideal >= MIN_FIT) {
         mode = "two";
         scale = Math.min(ideal, MAX_FIT);
-        // The cassette is centered in a wider column, so it leaves slack on
-        // each side; that slack is the left/center gap. Mirror it as a right
-        // margin on the dossier so all three gaps match.
-        const asideW = ASIDE_FRACTION * (winW - 2 * ROOT_PAD);
+        // The cassette is centered in its column, leaving equal slack on each
+        // side (that slack is its horizontal padding). Size the dossier so it
+        // leaves the SAME slack on each side of its own column, then both panes
+        // sit centered with matching padding: the two paddings that meet in the
+        // middle sum to the same total as the two outer paddings.
+        const contentBox = winW - 2 * ROOT_PAD;
+        const asideW = ASIDE_FRACTION * contentBox;
         const blockW = (natW || SUBJECT_MEASURE) * scale;
-        rightInset = Math.max((asideW - blockW) / 2, 0);
-        // Fluid dossier: zoom the fixed-measure block to fill the column that
-        // remains after reserving the matching right margin.
-        const mainW = (1 - ASIDE_FRACTION) * (winW - 2 * ROOT_PAD) - GAP;
+        const sidePad = Math.max((asideW - blockW) / 2, 0);
+        const mainW = (1 - ASIDE_FRACTION) * contentBox - GAP;
         rightScale = Math.min(
-          Math.max((mainW - rightInset) / DOSSIER_MEASURE, 1),
+          Math.max((mainW - 2 * sidePad) / DOSSIER_MEASURE, 1),
           DOSSIER_MAX,
         );
       } else {
@@ -87,10 +87,9 @@ export function useSubjectLayout(
       setState((prev) =>
         prev.mode === mode &&
         Math.abs(prev.scale - scale) < 0.005 &&
-        Math.abs(prev.rightScale - rightScale) < 0.005 &&
-        Math.abs(prev.rightInset - rightInset) < 0.5
+        Math.abs(prev.rightScale - rightScale) < 0.005
           ? prev
-          : { mode, scale, rightScale, rightInset },
+          : { mode, scale, rightScale },
       );
     };
 
