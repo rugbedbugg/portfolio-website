@@ -351,8 +351,8 @@ const AsciiArt = () => {
 
       <div className="relative">
         <div className="relative border border-cga-bcyan/35 bg-cga-black p-3 sm:p-4">
-          {/* now playing: plain string, no frame */}
-          <div className="mono-command mb-2 truncate text-center text-[11px] tracking-[0.14em] text-cga-cyan">
+          {/* now playing: plain string, floated with equal room above and below */}
+          <div className="mono-command mb-4 mt-1 truncate text-center text-[11px] tracking-[0.14em] text-cga-cyan">
             Now Playing <span className="text-cga-gray">//</span>{" "}
             <span className="text-cga-bcyan">{trackMeta}</span>
           </div>
