@@ -28,12 +28,12 @@ const DossierPanel = ({
       />
     ))}
 
-    <div className="mono-command flex items-center justify-between gap-2 border-b border-cga-bcyan/20 bg-cga-bcyan/[0.05] px-3 py-1.5 text-[10px] tracking-[0.16em]">
-      <span className="flex items-center gap-1.5 text-cga-bcyan">
+    <div className="mono-command flex items-center justify-between gap-2 border-b border-cga-bcyan/20 bg-cga-bcyan/[0.05] px-3 py-1.5">
+      <span className="flex items-center gap-1.5 text-base font-bold tracking-[0.12em] text-cga-bcyan">
         <span className="inline-block h-1.5 w-1.5 bg-cga-bred animate-blink" />
         {label}
       </span>
-      <span className="truncate text-cga-gray">{code}</span>
+      <span className="truncate text-[10px] tracking-[0.14em] text-cga-gray">{code}</span>
     </div>
 
     <div className={bodyClassName}>{children}</div>
