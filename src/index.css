@@ -16,6 +16,10 @@ All colors MUST be HSL.
 
 @layer base {
     :root {
+        /* Default project-card hover sweep duration; Index.tsx overrides it
+           with 500/zoom when the dossier column is zoom-scaled. */
+        --sweep: 500ms;
+
         /* IBM 5153 (CGA) palette, used semantically */
         --background: 0 0% 3%;
         --foreground: 0 0% 90%; /* near-white #E5E5E5 */
@@ -393,14 +397,22 @@ All colors MUST be HSL.
     }
 }
 
-/* GLOBAL TRACE: scale the dot-matrix grid to fill its panel width, centered */
+/* GLOBAL TRACE: scale the dot-matrix grid to fill its panel width, centered.
+   The font floor is removed so the grid keeps shrinking on narrow panels
+   instead of overflowing (which made it hug/clip at the right edge). */
 .global-trace-map {
     container-type: inline-size;
+}
+
+/* Project-card hover sweep: duration comes from --sweep so it can be
+   divided by the dossier column's zoom factor (see Index.tsx). */
+.sweep-duration {
+    transition-duration: var(--sweep);
 }
 .global-trace-grid {
     width: fit-content;
     margin-inline: auto;
-    font-size: clamp(6px, 2.15cqw, 15px);
+    font-size: min(15px, 2.15cqw);
     line-height: 0.62;
     letter-spacing: 0;
     white-space: pre;

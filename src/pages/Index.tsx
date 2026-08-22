@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, type CSSProperties } from "react";
 import { motion } from "framer-motion";
 import AsciiArt from "@/components/AsciiArt";
 import GlobalTrace from "@/components/GlobalTrace";
@@ -223,7 +223,15 @@ const Index = () => {
       >
         <div
           className="mx-auto w-full max-w-2xl space-y-6"
-          style={twoPane ? { zoom: rightScale } : undefined}
+          style={
+            {
+              ...(twoPane ? { zoom: rightScale } : undefined),
+              // zoom magnifies how far the hover sweep travels per ms, which
+              // makes it look faster than its 500ms transition; divide the
+              // duration by the same factor so perceived speed stays constant.
+              "--sweep": `${twoPane ? Math.round(500 / rightScale) : 500}ms`,
+            } as CSSProperties
+          }
         >
         <motion.nav
           {...fade(0.35)}
@@ -279,7 +287,7 @@ const Index = () => {
                   label={project.title}
                   className="group relative flex flex-col gap-2 overflow-hidden border border-cga-bcyan/25 bg-cga-bcyan/[0.03] p-4 transition-colors hover:border-cga-bcyan/60 hover:bg-cga-bcyan/[0.06]"
                 >
-                  <span className="pointer-events-none absolute inset-0 -translate-y-full opacity-0 transition-all duration-500 group-hover:translate-y-full group-hover:opacity-100">
+                  <span className="sweep-duration pointer-events-none absolute inset-0 -translate-y-full opacity-0 transition-all group-hover:translate-y-full group-hover:opacity-100">
                     <span className="absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-cga-bcyan/15 to-transparent" />
                     <span className="absolute inset-0 bg-[repeating-linear-gradient(to_bottom,rgba(85,255,255,0.05)_0px,rgba(85,255,255,0.05)_1px,transparent_1px,transparent_3px)]" />
                   </span>
