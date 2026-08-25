@@ -217,6 +217,10 @@ Covers: component rendering (Testing Library), utility functions, hook behavior.
 | Headers/Redirects | `_headers` and `_redirects` auto-copied to `dist/` on build |
 | Rendering | No SSR - pure SPA, all rendering client-side |
 
+## License
+
+MIT, see [LICENSE](LICENSE).
+
 ## Links
 
 - **Repo:** https://github.com/rugbedbugg/portfolio-website
